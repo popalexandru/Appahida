@@ -7,7 +7,6 @@ import com.example.appahida.constants.Constants.WATER_DATABASE_NAME
 import com.example.appahida.constants.Constants.WORKOUT_DATABASE_NAME
 import com.example.appahida.db.exercicesDB.ExercicesDatabase
 import com.example.appahida.db.waterdb.WaterDatabase
-import com.example.appahida.db.workoutDB.WorkoutDatabase
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.Module
 import dagger.Provides
@@ -32,19 +31,6 @@ object AppModule {
             Room.databaseBuilder(context, WaterDatabase::class.java, WATER_DATABASE_NAME)
                     .build()
 
-    @Singleton
-    @Provides
-    fun provideWorkoutDatabase(@ApplicationContext context: Context) =
-            Room.databaseBuilder(context, WorkoutDatabase::class.java, WORKOUT_DATABASE_NAME)
-                    .build()
-
-    @Singleton
-    @Provides
-    fun provideExerciceForDayDao(db : WorkoutDatabase) = db.getExerciceForTodayDao()
-
-    @Singleton
-    @Provides
-    fun providecustomdaydao(db : WorkoutDatabase) = db.getcustomdaydao()
 
     @Singleton
     @Provides
@@ -54,11 +40,8 @@ object AppModule {
     @Provides
     fun provideWaterDao(db : WaterDatabase) = db.getWaterDAO()
 
-    @Singleton
-    @Provides
-    fun provideWorkoutDao(db : WorkoutDatabase) = db.getWorkoutDao()
 
     @Singleton
     @Provides
-    fun provideFirebaseInstance() = FirebaseFirestore.getInstance();
+    fun provideFirebaseInstance() = FirebaseFirestore.getInstance()
 }

@@ -1,7 +1,6 @@
 package com.example.appahida.fragments
 
 import android.animation.ValueAnimator
-import android.app.AlarmManager
 import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.Color
@@ -10,28 +9,19 @@ import android.view.*
 import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.activity.addCallback
-import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.Observer
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
-import coil.load
 import com.example.appahida.R
 import com.example.appahida.adapters.ExercicesListAdapter
 import com.example.appahida.adapters.RepAdapter
-import com.example.appahida.adapters.WorkoutAdapter
 import com.example.appahida.databinding.MainFragmentBinding
 import com.example.appahida.objects.ExerciseToAdd
 import com.example.appahida.onVersionChanged
-import com.example.appahida.utils.onQueryTextChanged
 import com.example.appahida.viewmodels.MainViewModel
-import com.example.appahida.viewmodels.WorkoutsViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.collect
 import timber.log.Timber
-import java.lang.RuntimeException
 
 @AndroidEntryPoint
 class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClickListener {
@@ -43,7 +33,6 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
     private var _binding : MainFragmentBinding? = null
     private val binding get() = _binding!!
     private val viewModel: MainViewModel by activityViewModels()
-    private val workoutViewModel : WorkoutsViewModel by activityViewModels()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View {
@@ -92,10 +81,6 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
                 workoutViewModel.createWorkout()
             }
         }*/
-
-        workoutViewModel.daysWithWorkouts.observe(viewLifecycleOwner){
-            Timber.d(it.toString())
-        }
 
 /*        workoutViewModel.allWorkoutsLive.observe(viewLifecycleOwner){ workoutItem ->
             if (workoutItem.size > 0) {
