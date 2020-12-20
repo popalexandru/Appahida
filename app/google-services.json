@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "592853331093",
+    "project_id": "appahida",
+    "storage_bucket": "appahida.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:592853331093:android:4ff93f2ee81dfe90f27f9c",
+        "android_client_info": {
+          "package_name": "com.example.appahida"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "592853331093-8jujqb2mg9nues27sub5n84um1qm18pi.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBTyc1sPPIdszUVoOj4Sg2hDMa8jGayhDI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "592853331093-8jujqb2mg9nues27sub5n84um1qm18pi.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
