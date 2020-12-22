@@ -24,6 +24,11 @@ class Converters {
         return outStream.toByteArray()
     }
 
+    @TypeConverter fun calendarToDatestamp(calendar: Calendar): Long = calendar.timeInMillis
+
+    @TypeConverter fun datestampToCalendar(value: Long): Calendar =
+            Calendar.getInstance().apply { timeInMillis = value }
+
     @TypeConverter
     fun exercicesToJson(value : List<ExerciseToAdd>) = Gson().toJson(value)
 

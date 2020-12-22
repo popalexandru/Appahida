@@ -15,8 +15,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.appahida.R
 import com.example.appahida.adapters.CategoryAdapter
 import com.example.appahida.adapters.ExercicesListAdapter
+import com.example.appahida.adapters.OldAdapter
 import com.example.appahida.adapters.RepAdapter
 import com.example.appahida.databinding.PlanWorkoutBinding
+import com.example.appahida.db.dailyworkoutdb.ExerciseToDo
 import com.example.appahida.objects.ExerciseToAdd
 import com.example.appahida.objects.RepCount
 import com.example.appahida.objects.WorkoutCategory
@@ -31,7 +33,7 @@ import timber.log.Timber
 import java.util.*
 
 @AndroidEntryPoint
-class PlanWorkoutFragment : Fragment(), CategoryAdapter.onCategoryClick, ExercicesListAdapter.FavClickListener {
+class PlanWorkoutFragment : Fragment(), CategoryAdapter.onCategoryClick, OldAdapter.FavClickListener {
     private var _binding : PlanWorkoutBinding? = null
     private val binding get() = _binding!!
 
@@ -91,7 +93,7 @@ class PlanWorkoutFragment : Fragment(), CategoryAdapter.onCategoryClick, Exercic
         }
 
 
-        val verticalAdapter = ExercicesListAdapter(this, requireContext())
+        val verticalAdapter = OldAdapter(this, requireContext())
 
         binding.exercicesRecycler.layoutManager = LinearLayoutManager(context)
         binding.exercicesRecycler.hasFixedSize()
@@ -120,7 +122,7 @@ class PlanWorkoutFragment : Fragment(), CategoryAdapter.onCategoryClick, Exercic
     }
 
     override fun onFavListener(item: ExerciseToAdd) {
-
+        TODO("Not yet implemented")
     }
 
     override fun onAddClick(adapter: RepAdapter) {

@@ -11,11 +11,10 @@ import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.example.appahida.databinding.ExerciceAddedItemBinding
 import com.example.appahida.db.dailyworkoutdb.ExerciseToDo
-import com.example.appahida.db.workoutsdb.Exercice
 import com.example.appahida.objects.ExerciseToAdd
 import timber.log.Timber
 
-class ExercicesListAdapter(private val listener : FavClickListener, private val context : Context) : ListAdapter<Exercice, ExercicesListAdapter.CakeViewHolder>(
+class OldAdapter(private val listener : FavClickListener, private val context : Context) : ListAdapter<ExerciseToAdd, OldAdapter.CakeViewHolder>(
     DiffCallback()
 ){
 
@@ -62,25 +61,25 @@ class ExercicesListAdapter(private val listener : FavClickListener, private val 
                 }
         }
 
-        fun bind(category : Exercice){
+        fun bind(category : ExerciseToAdd){
             binding.apply {
                 exerciceName.text = category.name
-                exerciceCateogry.text = category.desc
-                exerciceImg.load(category.image)
+                exerciceCateogry.text = category.category
+                exerciceImg.load(category.picture)
             }
         }
     }
 
-    class DiffCallback : DiffUtil.ItemCallback<Exercice>() {
-        override fun areItemsTheSame(oldItem: Exercice, newItem: Exercice) =
+    class DiffCallback : DiffUtil.ItemCallback<ExerciseToAdd>() {
+        override fun areItemsTheSame(oldItem: ExerciseToAdd, newItem: ExerciseToAdd) =
             oldItem.name == newItem.name
 
-        override fun areContentsTheSame(oldItem: Exercice, newItem: Exercice) =
+        override fun areContentsTheSame(oldItem: ExerciseToAdd, newItem: ExerciseToAdd) =
             oldItem == newItem
     }
 
     interface FavClickListener{
-        fun onFavListener(item: Exercice)
+        fun onFavListener(item: ExerciseToAdd)
         fun onAddClick(repsRecyclerView: RepAdapter)
     }
 }

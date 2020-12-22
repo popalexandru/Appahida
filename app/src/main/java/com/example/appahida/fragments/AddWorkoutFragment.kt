@@ -22,6 +22,7 @@ import com.example.appahida.objects.ExerciseToAdd
 import com.example.appahida.objects.WorkoutCategory
 import com.example.appahida.utils.onQueryTextChanged
 import com.example.appahida.viewmodels.MainViewModel
+import com.example.appahida.viewmodels.WorkoutViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -31,6 +32,7 @@ class AddWorkoutFragment : Fragment(), CategoryAdapter.onCategoryClick, Exercice
 
     private lateinit var searchView: SearchView
     private val viewModel: MainViewModel by activityViewModels()
+    private val workoutsViewModel : WorkoutViewModel by activityViewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -112,6 +114,8 @@ class AddWorkoutFragment : Fragment(), CategoryAdapter.onCategoryClick, Exercice
     /* when user clicks on a database exercice */
     override fun onFavListener(item: ExerciseItem) {
         val exerciceItem = ExerciseToAdd(item.name, item.picture, item.description, item.category, null)
+
+        workoutsViewModel.insertExercice(exerciceItem)
 
         findNavController().navigate(R.id.action_addWorkoutFragment_to_mainFragment)
     }

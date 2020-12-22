@@ -10,6 +10,7 @@ import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.activity.addCallback
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -17,11 +18,16 @@ import com.example.appahida.R
 import com.example.appahida.adapters.ExercicesListAdapter
 import com.example.appahida.adapters.RepAdapter
 import com.example.appahida.databinding.MainFragmentBinding
+import com.example.appahida.db.dailyworkoutdb.ExerciseToDo
+import com.example.appahida.db.workoutsdb.DaywithExercices
+import com.example.appahida.db.workoutsdb.Exercice
 import com.example.appahida.objects.ExerciseToAdd
 import com.example.appahida.onVersionChanged
 import com.example.appahida.viewmodels.MainViewModel
+import com.example.appahida.viewmodels.WorkoutViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
+import java.util.Observer
 
 @AndroidEntryPoint
 class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClickListener {
@@ -33,6 +39,7 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
     private var _binding : MainFragmentBinding? = null
     private val binding get() = _binding!!
     private val viewModel: MainViewModel by activityViewModels()
+    private val workoutsViewModel : WorkoutViewModel by activityViewModels()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View {
@@ -62,55 +69,17 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
             }
         }
 
-/*        *//* Read today's workout *//*
-        workoutViewModel.getTodaysWorkout().observe(viewLifecycleOwner){ todaysWorkout ->
-            if (todaysWorkout != null) {
-                val exercicesList = todaysWorkout.exercices
-                Timber.d("Fetched list for todays is $exercicesList")
+        workoutsViewModel.workoutByDay.observe(viewLifecycleOwner){
+            Timber.d("Lista este $it")
 
-                *//* If we have exercices *//*
-                if (!exercicesList?.isEmpty()!!) {
-                    workoutAdapter.submitList(exercicesList)
-
-                    makeListVisible()
-                } else {
-                    hideList()
-                }
+            if(it == null){
+                workoutsViewModel.insertDay()
             }else{
-                Timber.d("Creating empty workout..")
-                workoutViewModel.createWorkout()
+                val list = it.exercices
+                workoutAdapter.submitList(list)
+                makeListVisible()
             }
-        }*/
-
-/*        workoutViewModel.allWorkoutsLive.observe(viewLifecycleOwner){ workoutItem ->
-            if (workoutItem.size > 0) {
-                val currentWorkout = workoutItem.get(0)
-                val list = currentWorkout.exercices
-
-                workoutViewModel.workoutsList.value = list
-                //workoutViewModel.workoutsList = list
-
-                Timber.d("Lista afisata $list")
-
-                if (list?.size!! > 0) {
-                    workoutAdapter.submitList(list)
-                    binding.workoutRecyclerView.visibility = View.VISIBLE
-                    binding.gantera.visibility = View.GONE
-                    binding.mesaj.visibility = View.GONE
-                    binding.adauga.text = "Adauga exercitiu"
-                    binding.deleteImg.visibility = View.VISIBLE
-                } else {
-                    binding.deleteImg.visibility = View.GONE
-                    binding.workoutRecyclerView.visibility = View.GONE
-                    binding.gantera.visibility = View.VISIBLE
-                    binding.mesaj.visibility = View.VISIBLE
-                    binding.adauga.text = "Adauga un antrenament"
-
-                    workoutAdapter.submitList(list)
-                }
-            }
-
-        }*/
+        }
 
         viewModel.waterLive.observe(viewLifecycleOwner){
             if(it.size > 0){
@@ -259,8 +228,8 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
         viewModel.updateVersion(version)
     }
 
-    override fun onFavListener(item: ExerciseToAdd) {
-        TODO("Not yet implemented")
+    override fun onFavListener(item: Exercice) {
+        workoutsViewModel.deleteExercice(item)
     }
 
     override fun onAddClick(repsRecyclerView: RepAdapter) {
