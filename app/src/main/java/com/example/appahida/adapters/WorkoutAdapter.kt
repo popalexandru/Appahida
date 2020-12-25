@@ -63,7 +63,7 @@ class WorkoutAdapter(private val listener : FavClickListener, private val contex
             binding.apply {
                 exerciceName.text = category.name
                 exerciceCateogry.text = category.category
-                exerciceImg.load(category.picture)
+                //exerciceImg.load(category.picture)
             }
         }
     }

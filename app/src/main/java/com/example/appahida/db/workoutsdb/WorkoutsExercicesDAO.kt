@@ -19,22 +19,12 @@ interface WorkoutsExercicesDAO {
     @Delete
     suspend fun deleteExercice(exercice: Exercice)
 
-    @Insert
-    suspend fun insertDay(day: Day)
+    @Query("SELECT * FROM Exercice WHERE timestamp BETWEEN :startDay AND :endDay")
+    fun getExercicesForDay(startDay : Long, endDay : Long) : Flow<List<ExercicesWithReps>>
 
-    @Delete
-    suspend fun deleteDay(day: Day)
+    @Query("DELETE FROM Reps WHERE timestamp BETWEEN :startDay AND :endDay")
+    fun deleteTodays(startDay : Long, endDay : Long)
 
-/*    @Query("SELECT * FROM Reps WHERE exId = :exerciceId")
-    fun getRepsForExercice(exerciceId : Int) : Flow<List<Reps>>
-
-    @Query("SELECT * FROM Exercice WHERE dayId = :dayId")
-    fun getExercicesForDay(dayId : Int) : Flow<List<Exercice>>
-
-    @Query("SELECT * FROM Day WHERE timestamp BETWEEN :startDay AND :endDay")
-    fun getDay(startDay : Long, endDay : Long) : Flow<Day>*/
-
-    @Transaction
-    @Query("SELECT * FROM Day WHERE timestamp BETWEEN :startDay AND :endDay")
-    fun getDayWithExercices(startDay : Long, endDay : Long) : Flow<DaywithExercices>
+    @Query("DELETE FROM Exercice WHERE timestamp BETWEEN :startDay AND :endDay")
+    fun deleteTodaysEx(startDay : Long, endDay : Long)
 }

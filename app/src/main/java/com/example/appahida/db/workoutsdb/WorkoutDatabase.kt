@@ -6,7 +6,7 @@ import androidx.room.TypeConverters
 import com.example.appahida.db.Converters
 
 @Database(
-        entities = [Reps::class, Exercice::class, Day::class],
+        entities = [Reps::class, Exercice::class],
         version = 1
 )
 @TypeConverters(Converters::class)

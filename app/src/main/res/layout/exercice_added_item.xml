@@ -2,6 +2,7 @@
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:tools="http://schemas.android.com/tools"
     app:cardBackgroundColor="@color/greos"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_gravity="center"
@@ -15,34 +16,24 @@
         android:padding="10dp"
         >
 
-        <ImageView
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:id="@+id/exerciceImg"
-            android:src="@drawable/ic_save"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
-
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/exerciceName"
-            android:layout_margin="5dp"
             android:textStyle="bold"
-            android:textColor="#000000"
+            android:textColor="#FFFFFF"
             android:text="Nume exercitiu"
-            app:layout_constraintLeft_toRightOf="@id/exerciceImg"
-            app:layout_constraintTop_toTopOf="@id/exerciceImg" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"/>
 
-        <ImageButton
+        <ImageView
             android:id="@+id/add_rep_image"
             android:layout_width="30dp"
             android:layout_height="30dp"
-            android:visibility="gone"
+            android:visibility="visible"
             android:src="@drawable/ic_add"
-            app:layout_constraintLeft_toRightOf="@id/repsRecyclerView"
-            app:layout_constraintTop_toBottomOf="@id/repsRecyclerView"/>
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintRight_toRightOf="parent"/>
 
         <TextView
             android:layout_width="wrap_content"
@@ -57,11 +48,15 @@
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/repsRecyclerView"
-            android:layout_width="wrap_content"
+            tools:listitem="@layout/rep_count_layout"
+            tools:itemCount="2"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:visibility="gone"
+            android:visibility="visible"
+            android:orientation="horizontal"
             app:layout_constraintTop_toBottomOf="@id/exerciceName"
-            app:layout_constraintLeft_toLeftOf="@id/exerciceName"/>
+            app:layout_constraintLeft_toLeftOf="@id/exerciceName"
+            app:layout_constraintRight_toLeftOf="@id/add_rep_image"/>
 
         <TextView
             android:layout_width="wrap_content"
@@ -69,6 +64,7 @@
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             android:text="Piept"
+            android:visibility="gone"
             android:id="@+id/exerciceCateogry" />
 
 

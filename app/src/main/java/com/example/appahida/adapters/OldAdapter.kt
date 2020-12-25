@@ -10,7 +10,6 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.example.appahida.databinding.ExerciceAddedItemBinding
-import com.example.appahida.db.dailyworkoutdb.ExerciseToDo
 import com.example.appahida.objects.ExerciseToAdd
 import timber.log.Timber
 
@@ -65,7 +64,7 @@ class OldAdapter(private val listener : FavClickListener, private val context : 
             binding.apply {
                 exerciceName.text = category.name
                 exerciceCateogry.text = category.category
-                exerciceImg.load(category.picture)
+                //exerciceImg.load(category.picture)
             }
         }
     }

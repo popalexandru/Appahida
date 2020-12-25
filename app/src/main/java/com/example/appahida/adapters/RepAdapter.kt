@@ -6,9 +6,11 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.appahida.databinding.RepCountLayoutBinding
+import com.example.appahida.db.workoutsdb.ExercicesWithReps
+import com.example.appahida.db.workoutsdb.Reps
 import com.example.appahida.objects.RepCount
 
-class RepAdapter() : ListAdapter<RepCount, RepAdapter.CakeViewHolder>(
+class RepAdapter() : ListAdapter<Reps, RepAdapter.CakeViewHolder>(
     DiffCallback()
 ){
 
@@ -37,19 +39,19 @@ class RepAdapter() : ListAdapter<RepCount, RepAdapter.CakeViewHolder>(
                 }
         }*/
 
-        fun bind(category : RepCount){
+        fun bind(category : Reps){
             binding.apply {
-                repCount.text = category.repNumber.toString()
+                repCount.text = category.repCount.toString()
                 repWeight.text = category.repWeight.toString()
             }
         }
     }
 
-    class DiffCallback : DiffUtil.ItemCallback<RepCount>() {
-        override fun areItemsTheSame(oldItem: RepCount, newItem: RepCount) =
-            oldItem.repNumber == newItem.repNumber && oldItem.repWeight == newItem.repWeight
+    class DiffCallback : DiffUtil.ItemCallback<Reps>() {
+        override fun areItemsTheSame(oldItem: Reps, newItem: Reps) =
+            oldItem.repCount == newItem.repCount && oldItem.repWeight == newItem.repWeight
 
-        override fun areContentsTheSame(oldItem: RepCount, newItem: RepCount) =
+        override fun areContentsTheSame(oldItem: Reps, newItem: Reps) =
             oldItem == newItem
     }
 }

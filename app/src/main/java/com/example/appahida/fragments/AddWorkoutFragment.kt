@@ -116,7 +116,8 @@ class AddWorkoutFragment : Fragment(), CategoryAdapter.onCategoryClick, Exercice
         val exerciceItem = ExerciseToAdd(item.name, item.picture, item.description, item.category, null)
 
         workoutsViewModel.insertExercice(exerciceItem)
-
+        viewModel.searchQuery.value = ""
+        viewModel.categoryQuery.value = ""
         findNavController().navigate(R.id.action_addWorkoutFragment_to_mainFragment)
     }
 

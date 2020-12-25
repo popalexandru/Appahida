@@ -9,14 +9,16 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/repCount"
+        android:textStyle="bold"
+        android:textColor="#8F8F8F"
         android:text="8"
-        android:textColor="#000000"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintLeft_toLeftOf="parent" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:textColor="#8F8F8F"
         android:text=" kg"
         app:layout_constraintLeft_toRightOf="@id/repCount"
         app:layout_constraintTop_toTopOf="@id/repCount"
@@ -26,13 +28,15 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="70"
+        android:textColor="#8F8F8F"
+        android:textStyle="bold"
         android:id="@+id/repWeight"
         app:layout_constraintTop_toBottomOf="@id/repCount"
-        app:layout_constraintLeft_toLeftOf="@id/repCount"
-        android:textColor="#000000" />
+        app:layout_constraintLeft_toLeftOf="@id/repCount"/>
 
     <TextView
         android:layout_width="wrap_content"
+        android:textColor="#8F8F8F"
         android:layout_height="wrap_content"
         android:text=" reps"
         app:layout_constraintLeft_toRightOf="@id/repWeight"

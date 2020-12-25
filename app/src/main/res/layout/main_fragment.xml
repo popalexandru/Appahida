@@ -93,10 +93,11 @@
                 app:layout_constraintTop_toBottomOf="@id/gantera" />
 
             <ImageView
+                android:id="@+id/start_workout"
                 android:layout_width="30dp"
                 android:layout_height="30dp"
                 app:tint="@color/textGri"
-                android:src="@drawable/ic_refresh"
+                android:src="@drawable/ic_start"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintTop_toTopOf="@id/arrow"
                 app:layout_constraintBottom_toBottomOf="@id/arrow" />

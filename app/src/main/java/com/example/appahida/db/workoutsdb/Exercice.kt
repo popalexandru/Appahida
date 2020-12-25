@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey
 data class Exercice(
         @PrimaryKey(autoGenerate = true)
         val exId : Int?,
-        val dayId : Int,
+        val timestamp : Long,
         val name : String,
         val desc : String,
         val image : String

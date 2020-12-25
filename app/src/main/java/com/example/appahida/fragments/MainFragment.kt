@@ -10,7 +10,6 @@ import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.activity.addCallback
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -18,16 +17,17 @@ import com.example.appahida.R
 import com.example.appahida.adapters.ExercicesListAdapter
 import com.example.appahida.adapters.RepAdapter
 import com.example.appahida.databinding.MainFragmentBinding
-import com.example.appahida.db.dailyworkoutdb.ExerciseToDo
-import com.example.appahida.db.workoutsdb.DaywithExercices
 import com.example.appahida.db.workoutsdb.Exercice
-import com.example.appahida.objects.ExerciseToAdd
+import com.example.appahida.db.workoutsdb.ExercicesWithReps
+import com.example.appahida.db.workoutsdb.Reps
+import com.example.appahida.objects.RepCount
 import com.example.appahida.onVersionChanged
 import com.example.appahida.viewmodels.MainViewModel
 import com.example.appahida.viewmodels.WorkoutViewModel
+import com.google.android.material.textfield.TextInputEditText
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.android.synthetic.main.exercice_added_item.view.*
 import timber.log.Timber
-import java.util.Observer
 
 @AndroidEntryPoint
 class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClickListener {
@@ -36,6 +36,8 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
         fun newInstance() = MainFragment()
     }
     lateinit var workoutAdapter : ExercicesListAdapter
+    lateinit var repsAdapter : RepAdapter
+
     private var _binding : MainFragmentBinding? = null
     private val binding get() = _binding!!
     private val viewModel: MainViewModel by activityViewModels()
@@ -69,14 +71,16 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
             }
         }
 
-        workoutsViewModel.workoutByDay.observe(viewLifecycleOwner){
+        workoutsViewModel.exercicesForToday.observe(viewLifecycleOwner){
+            //val exercice = it
             Timber.d("Lista este $it")
 
-            if(it == null){
-                workoutsViewModel.insertDay()
+            val repsCount : MutableList<Reps> = mutableListOf()
+
+            if(it.isEmpty()){
+                hideList()
             }else{
-                val list = it.exercices
-                workoutAdapter.submitList(list)
+                workoutAdapter.submitList(it)
                 makeListVisible()
             }
         }
@@ -123,13 +127,28 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
             adauga.setOnClickListener { findNavController().navigate(R.id.action_mainFragment_to_addWorkoutFragment)}
             arrow.setOnClickListener { findNavController().navigate(R.id.action_mainFragment_to_addWorkoutFragment) }
 
+            startWorkout.setOnClickListener {
+                val builder = AlertDialog.Builder(context)
+                builder.setMessage("Vrei sa incepi antrenamentul ?")
+                        .setCancelable(true)
+                        .setPositiveButton("Da"){ dialog, id ->
+                            Toast.makeText(requireContext(), "Antrenamentul incepe..", Toast.LENGTH_SHORT).show()
+                        }
+                        .setNegativeButton("Nu") { dialog, id ->
+                            // Dismiss the dialog
+                            dialog.dismiss()
+                        }
+                val alert = builder.create()
+                alert.show()
+            }
+
             deleteImg.setOnClickListener {
                 val builder = AlertDialog.Builder(context)
                 builder.setMessage("Esti sigur ca vrei sa stergi antrenamentul ?")
                     .setCancelable(true)
                     .setPositiveButton("Da"){ dialog, id ->
-                        //workoutViewModel.deleteWorkout()
-                        updateAdapter()
+                        workoutsViewModel.deleteTodayExercices()
+                        //updateAdapter()
                     }
                     .setNegativeButton("Nu") { dialog, id ->
                         // Dismiss the dialog
@@ -228,12 +247,35 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
         viewModel.updateVersion(version)
     }
 
-    override fun onFavListener(item: Exercice) {
-        workoutsViewModel.deleteExercice(item)
+    override fun onFavListener(item: ExercicesWithReps) {
+        //val ex = Exercice(item.ex)
+        workoutsViewModel.deleteExercice(item.exercice)
+        //Toast.makeText(requireContext(), "trebuie impl", Toast.LENGTH_SHORT).show()
     }
 
-    override fun onAddClick(repsRecyclerView: RepAdapter) {
-        TODO("Not yet implemented")
+    override fun onAddClick(repsRecyclerView: RepAdapter, exId : Int) {
+        repsAdapter = repsRecyclerView
+        val builder = AlertDialog.Builder(context)
+        val customLayout = layoutInflater.inflate(R.layout.choose_rep_layout, null)
+
+        val inputRep = customLayout.findViewById(R.id.inputCount) as TextInputEditText
+        val inputWei = customLayout.findViewById(R.id.input_wei) as TextInputEditText
+
+        builder.setView(customLayout)
+                .setCancelable(true)
+                .setPositiveButton("Ok"){ dialog, id ->
+
+                    val rep = Integer.parseInt(inputRep.text.toString())
+                    val wei = Integer.parseInt(inputWei.text.toString())
+
+                    workoutsViewModel.addReps(rep, wei, exId)
+/*
+                    repsRecyclerView.submitList(viewModel.list)
+                    repsRecyclerView.notifyDataSetChanged()*/
+                }
+
+        val alertdialog = builder.create()
+        alertdialog.show()
     }
 
     fun updateAdapter(){
@@ -276,5 +318,35 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
 
         callback.isEnabled = true
     }
+
+/*    override fun onAddClick(adapter: RepAdapter) {
+
+        val builder = AlertDialog.Builder(context)
+        val customLayout = layoutInflater.inflate(R.layout.choose_rep_layout, null)
+
+        val inputRep = customLayout.findViewById(R.id.inputCount) as TextInputEditText
+        val inputWei = customLayout.findViewById(R.id.input_wei) as TextInputEditText
+
+        builder.setView(customLayout)
+                .setCancelable(true)
+                .setPositiveButton("Ok"){ dialog, id ->
+
+
+                    val rep = inputRep.text.toString()
+                    val wei = inputWei.text.toString()
+
+                    viewModel.list.add(
+                            RepCount(Integer.parseInt(rep), Integer.parseInt(wei)
+                            )
+                    )
+
+                    adapter.submitList(viewModel.list)
+                    adapter.notifyDataSetChanged()
+                }
+
+        val alertdialog = builder.create()
+        alertdialog.show()
+
+    }*/
 
 }

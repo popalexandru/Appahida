@@ -2,7 +2,6 @@ package com.example.appahida.adapters
 
 import android.content.Context
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -10,23 +9,37 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.example.appahida.databinding.ExerciceAddedItemBinding
-import com.example.appahida.db.dailyworkoutdb.ExerciseToDo
-import com.example.appahida.db.workoutsdb.Exercice
-import com.example.appahida.objects.ExerciseToAdd
+import com.example.appahida.db.workoutsdb.ExercicesWithReps
+import kotlinx.android.synthetic.main.exercice_added_item.view.*
 import timber.log.Timber
 
-class ExercicesListAdapter(private val listener : FavClickListener, private val context : Context) : ListAdapter<Exercice, ExercicesListAdapter.CakeViewHolder>(
+class ExercicesListAdapter(private val listener : FavClickListener, private val context : Context) : ListAdapter<ExercicesWithReps, ExercicesListAdapter.CakeViewHolder>(
     DiffCallback()
 ){
 
+    val varticalAdapter = RepAdapter()
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CakeViewHolder {
         val binding = ExerciceAddedItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val adapter = RepAdapter()
+        binding.repsRecyclerView.adapter = adapter
 
         return CakeViewHolder(binding, listener)
     }
 
     override fun onBindViewHolder(holder: CakeViewHolder, position: Int) {
         val currentCake = getItem(position)
+
+        val repsList = currentCake.reps
+        var elAdaptero = RepAdapter()
+
+        holder.itemView.repsRecyclerView.apply {
+            layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+            hasFixedSize()
+            adapter = elAdaptero
+        }
+
+        elAdaptero.submitList(repsList)
         holder.bind(currentCake)
     }
 
@@ -35,13 +48,6 @@ class ExercicesListAdapter(private val listener : FavClickListener, private val 
         init {
 
                 binding.apply {
-                    val varticalAdapter = RepAdapter()
-                    repsRecyclerView.apply {
-                        layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
-                        hasFixedSize()
-                        adapter = varticalAdapter
-                    }
-
                     root.setOnClickListener{
                         val position = adapterPosition
                         if(position != RecyclerView.NO_POSITION){
@@ -54,33 +60,40 @@ class ExercicesListAdapter(private val listener : FavClickListener, private val 
                         Timber.d("Add image clicked")
 
                         //binding.addRepImage.visibility = View.GONE
-                        binding.adaugaRep.visibility = View.GONE
-                        binding.repsRecyclerView.visibility = View.VISIBLE
+                        //binding.adaugaRep.visibility = View.GONE
+                        //binding.repsRecyclerView.visibility = View.VISIBLE
 
-                        listener.onAddClick(varticalAdapter)
+                        getItem(adapterPosition).exercice.exId?.let { it1 -> listener.onAddClick(varticalAdapter, it1) }
                     }
                 }
         }
 
-        fun bind(category : Exercice){
+        fun bind(category : ExercicesWithReps){
             binding.apply {
-                exerciceName.text = category.name
-                exerciceCateogry.text = category.desc
-                exerciceImg.load(category.image)
+                exerciceName.text = category.exercice.name
+                exerciceCateogry.text = category.exercice.desc
+                //exerciceImg.load(category.exercice.image)
+                //val adapter = RepAdapter()
+                //binding.repsRecyclerView.adapter = adapter
+                //adapter.submitList(category.reps)
+
+/*                val adapter = repsRecyclerView.adapter as RepAdapter
+                adapter.submitList(category.reps)*/
+
             }
         }
     }
 
-    class DiffCallback : DiffUtil.ItemCallback<Exercice>() {
-        override fun areItemsTheSame(oldItem: Exercice, newItem: Exercice) =
-            oldItem.name == newItem.name
+    class DiffCallback : DiffUtil.ItemCallback<ExercicesWithReps>() {
+        override fun areItemsTheSame(oldItem: ExercicesWithReps, newItem: ExercicesWithReps) =
+            oldItem.exercice.name == newItem.exercice.name
 
-        override fun areContentsTheSame(oldItem: Exercice, newItem: Exercice) =
+        override fun areContentsTheSame(oldItem: ExercicesWithReps, newItem: ExercicesWithReps) =
             oldItem == newItem
     }
 
     interface FavClickListener{
-        fun onFavListener(item: Exercice)
-        fun onAddClick(repsRecyclerView: RepAdapter)
+        fun onFavListener(item: ExercicesWithReps)
+        fun onAddClick(repsRecyclerView: RepAdapter, exId : Int)
     }
 }
