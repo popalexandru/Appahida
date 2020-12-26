@@ -16,6 +16,12 @@
     android:layout_height="match_parent"
     tools:context=".fragments.MainFragment">
 
+    <devs.mulham.horizontalcalendar.HorizontalCalendarView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:textColorSelected="#FFFF"
+        android:id="@+id/calendarview" />
+
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/card_view_today"
         android:layout_width="match_parent"

@@ -32,7 +32,17 @@ class MainViewModel @ViewModelInject constructor(
         private val waterRepository: WaterRepository
 ) : ViewModel() {
 
-    private val water_quantity = waterRepository.getWaterByDate(Date().time)
+    val selectedDate = MutableStateFlow(Calendar.getInstance().timeInMillis)
+
+    //private val water_quantity = waterRepository.getWaterByDate(Date().time)
+
+    private val water_quantity = combine(selectedDate){
+        date -> selectedDate
+    }.flatMapLatest {
+        Timber.d("Fetching water values for${selectedDate.value}")
+        waterRepository.getWaterByDate(selectedDate.value)
+    }
+
     val waterLive = water_quantity.asLiveData()
 
     val preferencesFlow = preferencesManager.exercicesVersion
@@ -40,9 +50,6 @@ class MainViewModel @ViewModelInject constructor(
 
     val reminderFlow = preferencesManager.isReminderSet
     val reminderData = reminderFlow.asLiveData()
-
-    val sortFlow = preferencesManager.sortOrderFlow
-    val sortType = sortFlow.asLiveData()
 
     fun setReminder() = viewModelScope.launch{
         preferencesManager.setReminder()
@@ -120,25 +127,22 @@ class MainViewModel @ViewModelInject constructor(
     fun addWater(waterToAdd : Int){
         val currentWater = waterLive.value
 
-        if(currentWater?.size!! > 0){
-        val quantity = currentWater?.get(0).waterQty as Int
+/*        if(currentWater?.size!! > 0){
+            val quantity = currentWater?.get(0).waterQty as Int
 
-        if(quantity < 10000){
-            currentWater[0].waterQty = quantity + waterToAdd
-            //water_quantity.postValue(currentWater + waterSize)
-            waterRepository.updateWater(currentWater[0])
+            if(quantity < 10000){
+                currentWater[0].waterQty = quantity + waterToAdd
+                //water_quantity.postValue(currentWater + waterSize)
+                waterRepository.updateWater(currentWater[0])
+            }
         }
-        }
-        else{
-            val today = Calendar.getInstance()
+        else{*/
+            val today = Calendar.getInstance().timeInMillis
             val waterItem = WaterDayItem(
-                    waterToAdd,
-                    today.get(Calendar.DAY_OF_MONTH),
-                    today.get(Calendar.MONTH),
-                    today.get(Calendar.YEAR))
+                    waterToAdd,today)
 
             waterRepository.insertWater(waterItem)
-        }
+        //}
     }
 
     fun setWaterReminder(){

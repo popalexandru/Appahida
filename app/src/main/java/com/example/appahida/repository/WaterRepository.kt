@@ -15,14 +15,21 @@ class WaterRepository @Inject constructor(
         val waterDao : WaterDAO
 ) {
 
-    fun getWaterByDate(dateInMilis: Long): Flow<List<WaterDayItem>> {
-        val date = Calendar.getInstance()
+    fun getWaterByDate(dateInMilis: Long): Flow<Int> {
+        val beginOfDay = Calendar.getInstance()
+        val endOfDay = Calendar.getInstance()
 
-        val zi = date.get(Calendar.DAY_OF_MONTH)
-        val month = date.get(Calendar.MONTH)
-        val year = date.get(Calendar.YEAR)
+        beginOfDay.timeInMillis = dateInMilis
+        endOfDay.timeInMillis = dateInMilis
 
-        return waterDao.getWaterByDate(zi, month, year)
+        beginOfDay.set(Calendar.HOUR_OF_DAY, 0)
+        beginOfDay.set(Calendar.MINUTE, 1)
+
+
+        endOfDay.set(Calendar.HOUR_OF_DAY, 23)
+        endOfDay.set(Calendar.MINUTE, 59)
+
+        return waterDao.getWaterByDay(beginOfDay.timeInMillis, endOfDay.timeInMillis)
     }
 
     fun insertWater(waterDayItem: WaterDayItem) = CoroutineScope(Dispatchers.IO).launch {

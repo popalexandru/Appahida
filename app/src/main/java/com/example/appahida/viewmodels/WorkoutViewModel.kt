@@ -8,7 +8,11 @@ import com.example.appahida.db.workoutsdb.Reps
 import com.example.appahida.objects.ExerciseToAdd
 import com.example.appahida.repository.WorkoutRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 
 class WorkoutViewModel @ViewModelInject constructor(
@@ -16,7 +20,18 @@ class WorkoutViewModel @ViewModelInject constructor(
         private val workoutRepository: WorkoutRepository
 ) : ViewModel() {
     //val workoutByDay = workoutRepository.getToday(Calendar.getInstance()).asLiveData()
-    val exercicesForToday = workoutRepository.getDayWorkouts(Calendar.getInstance()).asLiveData()
+
+    val selectedDate = MutableStateFlow(Calendar.getInstance().timeInMillis)
+
+    val exercicesForTo = combine(selectedDate){
+        date -> selectedDate
+    }.flatMapLatest {
+        workoutRepository.getDayWorkouts(it.value)
+    }
+
+    val exercicesForToday = exercicesForTo.asLiveData()
+
+    //val exercicesForToday = workoutRepository.getDayWorkouts(Calendar.getInstance()).asLiveData()
 
     fun insertExercice(exercice : ExerciseToAdd){
         val exer = Exercice(null,

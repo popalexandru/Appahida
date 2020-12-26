@@ -15,12 +15,12 @@ import javax.inject.Inject
 class WorkoutRepository @Inject constructor(
         val workoutExercicesDAO: WorkoutsExercicesDAO
 ) {
-    fun getDayWorkouts(day: Calendar): Flow<List<ExercicesWithReps>> {
+    fun getDayWorkouts(todayMilis : Long): Flow<List<ExercicesWithReps>> {
         val beginOfDay = Calendar.getInstance()
         val endOfDay = Calendar.getInstance()
 
-        beginOfDay.timeInMillis = day.timeInMillis
-        endOfDay.timeInMillis = day.timeInMillis
+        beginOfDay.timeInMillis = todayMilis
+        endOfDay.timeInMillis = todayMilis
 
         beginOfDay.set(Calendar.HOUR_OF_DAY, 0)
         beginOfDay.set(Calendar.MINUTE, 1)

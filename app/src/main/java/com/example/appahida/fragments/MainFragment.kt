@@ -26,8 +26,12 @@ import com.example.appahida.viewmodels.MainViewModel
 import com.example.appahida.viewmodels.WorkoutViewModel
 import com.google.android.material.textfield.TextInputEditText
 import dagger.hilt.android.AndroidEntryPoint
+import devs.mulham.horizontalcalendar.HorizontalCalendar
+import devs.mulham.horizontalcalendar.utils.CalendarEventsPredicate
+import devs.mulham.horizontalcalendar.utils.HorizontalCalendarListener
 import kotlinx.android.synthetic.main.exercice_added_item.view.*
 import timber.log.Timber
+import java.util.*
 
 @AndroidEntryPoint
 class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClickListener {
@@ -50,6 +54,28 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+
+        val startDate = Calendar.getInstance()
+        startDate.add(Calendar.MONTH, -1)
+
+        val endDate = Calendar.getInstance()
+        endDate.add(Calendar.MONTH, 1)
+
+        val calendar = HorizontalCalendar.Builder(requireActivity(), R.id.calendarview)
+            .range(startDate, endDate)
+            .datesNumberOnScreen(7)
+            .configure().showTopText(false)
+            .end()
+            .build()
+
+        val listener = object : HorizontalCalendarListener(){
+            override fun onDateSelected(date: Calendar?, position: Int) {
+                viewModel.selectedDate.value = date?.timeInMillis!!
+                workoutsViewModel.selectedDate.value = date?.timeInMillis!!
+            }
+        }
+
+        calendar.calendarListener = listener
 
         viewModel.getExercices(this)
 
@@ -86,18 +112,19 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
         }
 
         viewModel.waterLive.observe(viewLifecycleOwner){
-            if(it.size > 0){
+            if(it != null){
 
-            val item = it.get(0)
-            if(item.waterQty > 1000){
+            //val item = it.get(0)
+            val item = it
+            if(it > 1000){
                 binding.waterQty.setTextColor(Color.parseColor("#AAAA00"))
             }
-            if(item.waterQty > 2000){
+            if(it > 2000){
                 binding.waterQty.setTextColor(Color.parseColor("#00AA00"))
             }
 
                 val currentValue = Integer.parseInt(binding.waterQty.text.toString())
-                val newValue = item.waterQty
+                val newValue = it
 
                 if((newValue - currentValue) > 900){
                     binding.waterQty.text = newValue.toString()
@@ -105,7 +132,7 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
 
                     Timber.d("ed ${binding.progressWater.max}")
                 }else{
-                    val valueAnimator = ValueAnimator.ofInt(currentValue, item.waterQty)
+                    val valueAnimator = ValueAnimator.ofInt(currentValue, it)
                     valueAnimator.setDuration(700)
                     valueAnimator.addUpdateListener(ValueAnimator.AnimatorUpdateListener{
                         binding.waterQty.text = it.getAnimatedValue().toString()
@@ -115,7 +142,10 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
                     valueAnimator.start()
                 }
 
-                Timber.d("Set water to ${item.waterQty} ")
+                Timber.d("Set water to ${it} ")
+            }else{
+                binding.waterQty.text = "0"
+                binding.progressWater.progress = 0
             }
         }
 
