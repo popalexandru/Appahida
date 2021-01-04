@@ -74,7 +74,6 @@ class AddWorkoutFragment : Fragment(), CategoryAdapter.onCategoryClick, Exercice
 
                 addItemDecoration(DividerItemDecoration(this.context, DividerItemDecoration.VERTICAL))
             }
-
         }
     }
 

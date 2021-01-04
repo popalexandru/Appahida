@@ -13,17 +13,25 @@ import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.work.PeriodicWorkRequest
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.WorkRequest
 import com.example.appahida.R
 import com.example.appahida.adapters.ExercicesListAdapter
 import com.example.appahida.adapters.RepAdapter
+import com.example.appahida.constants.Constants
+import com.example.appahida.constants.Constants.ACTION_START_OR_RESUME
 import com.example.appahida.databinding.MainFragmentBinding
 import com.example.appahida.db.workoutsdb.Exercice
 import com.example.appahida.db.workoutsdb.ExercicesWithReps
 import com.example.appahida.db.workoutsdb.Reps
 import com.example.appahida.objects.RepCount
 import com.example.appahida.onVersionChanged
+import com.example.appahida.services.WorkingService
 import com.example.appahida.viewmodels.MainViewModel
 import com.example.appahida.viewmodels.WorkoutViewModel
+import com.example.appahida.workers.WaterWorker
 import com.google.android.material.textfield.TextInputEditText
 import dagger.hilt.android.AndroidEntryPoint
 import devs.mulham.horizontalcalendar.HorizontalCalendar
@@ -32,6 +40,7 @@ import devs.mulham.horizontalcalendar.utils.HorizontalCalendarListener
 import kotlinx.android.synthetic.main.exercice_added_item.view.*
 import timber.log.Timber
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 @AndroidEntryPoint
 class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClickListener {
@@ -46,6 +55,13 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
     private val binding get() = _binding!!
     private val viewModel: MainViewModel by activityViewModels()
     private val workoutsViewModel : WorkoutViewModel by activityViewModels()
+
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+
+        //val checkwaterRequest = PeriodicWorkRequestBuilder<WaterWorker>(1, TimeUnit.HOURS).build()
+        //WorkManager.getInstance(requireContext()).enqueue(checkwaterRequest)
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View {
@@ -156,6 +172,7 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
         binding.apply{
             adauga.setOnClickListener { findNavController().navigate(R.id.action_mainFragment_to_addWorkoutFragment)}
             arrow.setOnClickListener { findNavController().navigate(R.id.action_mainFragment_to_addWorkoutFragment) }
+            //editBtn.setOnClickListener { findNavController().navigate(R.id.action_mainFragment_to_workoutEditor) }
 
             startWorkout.setOnClickListener {
                 val builder = AlertDialog.Builder(context)
@@ -163,6 +180,8 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
                         .setCancelable(true)
                         .setPositiveButton("Da"){ dialog, id ->
                             Toast.makeText(requireContext(), "Antrenamentul incepe..", Toast.LENGTH_SHORT).show()
+                            findNavController().navigate(R.id.action_mainFragment_to_workoutEditor)
+                            sendCommandToService(ACTION_START_OR_RESUME)
                         }
                         .setNegativeButton("Nu") { dialog, id ->
                             // Dismiss the dialog
@@ -316,11 +335,14 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
         binding.workoutRecyclerView.visibility = View.VISIBLE
         binding.gantera.visibility = View.GONE
         binding.mesaj.visibility = View.GONE
+        binding.editBtn.visibility = View.VISIBLE
         binding.adauga.text = "Adauga exercitiu"
         binding.deleteImg.visibility = View.VISIBLE
+        binding.startWorkout.visibility = View.VISIBLE
     }
 
     private fun hideList(){
+        binding.startWorkout.visibility = View.GONE
         binding.deleteImg.visibility = View.GONE
         binding.workoutRecyclerView.visibility = View.GONE
         binding.gantera.visibility = View.VISIBLE
@@ -348,6 +370,12 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
 
         callback.isEnabled = true
     }
+
+    private fun sendCommandToService(action : String) =
+            Intent(requireContext(), WorkingService::class.java).also {
+                it.action = action
+                requireContext().startService(it)
+            }
 
 /*    override fun onAddClick(adapter: RepAdapter) {
 

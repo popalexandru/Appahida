@@ -19,8 +19,6 @@ class WorkoutViewModel @ViewModelInject constructor(
         @ApplicationContext private val context : Context,
         private val workoutRepository: WorkoutRepository
 ) : ViewModel() {
-    //val workoutByDay = workoutRepository.getToday(Calendar.getInstance()).asLiveData()
-
     val selectedDate = MutableStateFlow(Calendar.getInstance().timeInMillis)
 
     val exercicesForTo = combine(selectedDate){
@@ -30,8 +28,6 @@ class WorkoutViewModel @ViewModelInject constructor(
     }
 
     val exercicesForToday = exercicesForTo.asLiveData()
-
-    //val exercicesForToday = workoutRepository.getDayWorkouts(Calendar.getInstance()).asLiveData()
 
     fun insertExercice(exercice : ExerciseToAdd){
         val exer = Exercice(null,
@@ -60,9 +56,4 @@ class WorkoutViewModel @ViewModelInject constructor(
 
         workoutRepository.deleteTodaysWorkout(today)
     }
-/*    fun insertDay(){
-        val timestamp = Calendar.getInstance().timeInMillis
-
-        workoutRepository.insertDay(timestamp)
-    }*/
 }

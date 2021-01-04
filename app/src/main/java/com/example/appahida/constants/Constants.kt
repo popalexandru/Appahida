@@ -22,5 +22,17 @@ object Constants {
     const val EXERCICE_DES = "Description"
     const val EXERCICE_CAT = "Category"
 
+    const val TIMER_UPDATE_INTERVAL = 50L
+
+    const val ACTION_START_OR_RESUME = "ACTION_START_OR_RESUME"
+    const val ACTION_PAUSE_SERVICE = "ACTION_PAUSE_SERVICE"
+    const val ACTION_STOP_SERVICE = "ACTION_STOP_SERVICE"
+
+    const val NOTIFICAITON_CHANNEL_ID = "working_channel"
+    const val NOTIFICATION_CHANNEL_AME = "Working"
+    const val NOTIFICATION_ID = 1
+
+    const val ACTION_SHOW_TRACKING_FRAGMENT = "ACTION_SHOW_TRACKING_FRAGMENT"
+
     val months = arrayOf("Ianuarie", "Februarie", "Martie", "Aprilie", "Mai", "Iunie", "Iulie", "August", "Septembrie", "Octombire", "Noiembrie", "Decembrie")
 }

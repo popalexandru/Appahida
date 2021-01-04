@@ -154,7 +154,7 @@ class MainViewModel @ViewModelInject constructor(
 
         val pendingIntent = PendingIntent.getBroadcast(context, 0, notificationIntent, 0)
 
-        alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP, time, TimeUnit.HOURS.toMillis(1), pendingIntent)
+        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, time, TimeUnit.HOURS.toMillis(3), pendingIntent)
 
         Timber.d("Alarma setata pentru $time")
     }

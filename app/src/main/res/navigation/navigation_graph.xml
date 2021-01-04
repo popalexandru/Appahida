@@ -5,6 +5,11 @@
     android:id="@+id/navigation_graph"
     app:startDestination="@id/mainFragment">
 
+    <action
+        android:id="@+id/action_global_workingFragment"
+        app:destination="@id/workoutEditor"
+        app:launchSingleTop="true" />
+
     <fragment
         android:id="@+id/mainFragment"
         android:name="com.example.appahida.fragments.MainFragment"
@@ -15,6 +20,11 @@
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/fade_out"
             app:destination="@id/addWorkoutFragment"/>
+        <action
+            android:id="@+id/action_mainFragment_to_workoutEditor"
+            app:destination="@id/workoutEditor"
+            app:enterAnim="@anim/slide_in_bottom"
+            app:exitAnim="@anim/fade_out" />
     </fragment>
 
     <fragment
@@ -32,6 +42,16 @@
             app:destination="@id/mainFragment"
             app:enterAnim="@anim/fade__in"
             app:exitAnim="@anim/slide_out_right"/>
+    </fragment>
+    <fragment
+        android:id="@+id/workoutEditor"
+        android:name="com.example.appahida.fragments.WorkoutDoerFragment"
+        android:label="WorkoutEditor"
+        app:enterAnim="@anim/fade__in"
+        app:exitAnim="@anim/slide_out_right" >
+        <action
+            android:id="@+id/action_workoutEditor_to_mainFragment"
+            app:destination="@id/mainFragment" />
     </fragment>
 
 </navigation>

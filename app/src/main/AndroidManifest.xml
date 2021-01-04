@@ -16,6 +16,10 @@
         android:theme="@style/Theme.Appahida"
         android:usesCleartextTraffic="true">
 
+        <service
+            android:name=".services.WorkingService"
+            android:foregroundServiceType="location" />
+
         <receiver
             android:name=".alarms.AlarmBroadcastReceiver"
             android:process=":remote" />
