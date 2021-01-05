@@ -75,6 +75,7 @@
                 android:layout_width="110dp"
                 android:layout_height="110dp"
                 android:src="@drawable/dumbell"
+                android:visibility="gone"
                 app:layout_constraintTop_toBottomOf="@id/workoutRecyclerView"
                 app:layout_constraintLeft_toLeftOf="parent"
                 android:layout_marginLeft="30dp" />
@@ -85,18 +86,19 @@
                 android:layout_height="wrap_content"
                 android:textColor="@color/textGri"
                 android:text="Nu ai nici un antrenament inca"
-                app:layout_constraintLeft_toRightOf="@id/gantera"
-                app:layout_constraintTop_toTopOf="@id/gantera"
-                app:layout_constraintBottom_toBottomOf="@id/gantera" />
+                app:layout_constraintTop_toBottomOf="@id/workoutRecyclerView"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"/>
 
             <View
                 android:id="@+id/separator"
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
+                android:layout_marginTop="5dp"
                 android:background="@android:color/darker_gray"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/gantera" />
+                app:layout_constraintTop_toBottomOf="@id/mesaj" />
 
             <ImageView
                 android:layout_width="25dp"

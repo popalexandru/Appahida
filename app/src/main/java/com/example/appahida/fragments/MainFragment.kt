@@ -2,14 +2,18 @@ package com.example.appahida.fragments
 
 import android.animation.ValueAnimator
 import android.app.AlertDialog
+import android.app.ProgressDialog
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
+import android.text.format.DateUtils
 import android.view.*
 import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.activity.addCallback
+import androidx.core.view.isVisible
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -32,13 +36,17 @@ import com.example.appahida.services.WorkingService
 import com.example.appahida.viewmodels.MainViewModel
 import com.example.appahida.viewmodels.WorkoutViewModel
 import com.example.appahida.workers.WaterWorker
+import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import dagger.hilt.android.AndroidEntryPoint
 import devs.mulham.horizontalcalendar.HorizontalCalendar
 import devs.mulham.horizontalcalendar.utils.CalendarEventsPredicate
 import devs.mulham.horizontalcalendar.utils.HorizontalCalendarListener
 import kotlinx.android.synthetic.main.exercice_added_item.view.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
 import timber.log.Timber
+import java.time.LocalDate
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -56,44 +64,84 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
     private val viewModel: MainViewModel by activityViewModels()
     private val workoutsViewModel : WorkoutViewModel by activityViewModels()
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-
-        //val checkwaterRequest = PeriodicWorkRequestBuilder<WaterWorker>(1, TimeUnit.HOURS).build()
-        //WorkManager.getInstance(requireContext()).enqueue(checkwaterRequest)
-    }
-
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View {
         _binding = MainFragmentBinding.inflate(layoutInflater)
         return binding.root
     }
 
+    lateinit var alert : AlertDialog
+    lateinit var progressDialog : ProgressDialog
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        lifecycleScope.launchWhenStarted {
+            viewModel.uiState.collect {
+                when(it){
+                    is MainViewModel.UiState.Success -> {
+                            //alert.dismiss()
+                        progressDialog.dismiss()
+                    }
 
-        val startDate = Calendar.getInstance()
-        startDate.add(Calendar.MONTH, -1)
+                    is MainViewModel.UiState.Loading -> {
+/*                        val builder = AlertDialog.Builder(context)
 
-        val endDate = Calendar.getInstance()
-        endDate.add(Calendar.MONTH, 1)
+                        val customLayout = layoutInflater.inflate(R.layout.loading_layout, null)
 
-        val calendar = HorizontalCalendar.Builder(requireActivity(), R.id.calendarview)
-            .range(startDate, endDate)
-            .datesNumberOnScreen(7)
-            .configure().showTopText(false)
-            .end()
-            .build()
+                        builder.setView(customLayout)
+                            .setCancelable(true)
 
-        val listener = object : HorizontalCalendarListener(){
-            override fun onDateSelected(date: Calendar?, position: Int) {
-                viewModel.selectedDate.value = date?.timeInMillis!!
-                workoutsViewModel.selectedDate.value = date?.timeInMillis!!
+                        alert = builder.create()
+                        alert.show()
+                        delay(400)*/
+
+                        progressDialog = ProgressDialog.show(requireContext(), "", "Loading..", true)
+                        progressDialog.show()
+                        delay(500)
+                    }
+
+                    else -> Unit
+                }
             }
         }
 
-        calendar.calendarListener = listener
+
+        setHorizontalCalendar()
 
         viewModel.getExercices(this)
+
+        workoutsViewModel.todaysValue.observe(viewLifecycleOwner){
+            if(it == null){
+                Timber.d("Today entitiy not created, will create one..")
+
+                workoutsViewModel.insertDay(0, true)
+            }else{
+                Timber.d("Today entitiy already existing for today")
+
+                if(it.isWorkoutDone){
+                    //getView()?.let { it1 -> Snackbar.make(it1, "Workout is done ! :) duration ${TimeUnit.MILLISECONDS.toSeconds(it.workoutDuration)}", Snackbar.LENGTH_SHORT).show() }
+                    binding.startWorkout.text = "Done - ${TimeUnit.MILLISECONDS.toSeconds(it.workoutDuration)}"
+                }else{
+                    binding.startWorkout.text = "INCEPE ANTRENAMENT"
+                }
+            }
+        }
+
+        workoutsViewModel.exercicesForToday.observe(viewLifecycleOwner){ dayWithExercise ->
+            Timber.d("Lista este $dayWithExercise")
+
+            if(dayWithExercise != null){
+                if(dayWithExercise.exercices.size > 0){
+                    val exercicesList = dayWithExercise.exercices
+                    workoutAdapter.submitList(exercicesList)
+                    makeListVisible()
+                }else{
+                    hideList()
+                }
+            }else{
+                hideList()
+            }
+
+        }
 
         viewModel.reminderData.observe(viewLifecycleOwner){
             if(it == false){
@@ -110,20 +158,6 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
                 binding.progressWater.max = it
             }else{
                 binding.progressWater.max = 2000
-            }
-        }
-
-        workoutsViewModel.exercicesForToday.observe(viewLifecycleOwner){
-            //val exercice = it
-            Timber.d("Lista este $it")
-
-            val repsCount : MutableList<Reps> = mutableListOf()
-
-            if(it.isEmpty()){
-                hideList()
-            }else{
-                workoutAdapter.submitList(it)
-                makeListVisible()
             }
         }
 
@@ -228,6 +262,64 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
             }
         }
 
+    }
+
+    private fun setHorizontalCalendar(){
+        val startDate = Calendar.getInstance()
+        startDate.add(Calendar.MONTH, -1)
+
+        val endDate = Calendar.getInstance()
+        endDate.add(Calendar.MONTH, 1)
+
+        val calendar = HorizontalCalendar.Builder(requireActivity(), R.id.calendarview)
+                .range(startDate, endDate)
+                .datesNumberOnScreen(7)
+                .configure().showTopText(false)
+                .end()
+                .build()
+
+        val listener = object : HorizontalCalendarListener(){
+            override fun onDateSelected(date: Calendar?, position: Int) {
+                viewModel.postState(MainViewModel.UiState.Loading)
+                Timber.d("Date selected ${date?.timeInMillis}")
+
+                val dateSelectedStart = Calendar.getInstance()
+                dateSelectedStart.timeInMillis = date?.timeInMillis!!
+
+
+                dateSelectedStart.set(Calendar.HOUR_OF_DAY, 0)
+                dateSelectedStart.set(Calendar.MINUTE, 0)
+                dateSelectedStart.set(Calendar.SECOND, 1)
+                dateSelectedStart.set(Calendar.MILLISECOND, 0)
+
+                val time = dateSelectedStart.timeInMillis
+
+                viewModel.selectedDate.value = time
+                workoutsViewModel.selectedDate.value = time
+
+                if(DateUtils.isToday(time)){
+                    /* its fine */
+                        binding.apply {
+                            adauga.isVisible = true
+                            arrow.isVisible = true
+                            editBtn.isVisible = true
+                            mesaj.text = "Nu ai un antrenament inca"
+                        }
+                }else{
+                    binding.apply {
+                        adauga.isVisible = false
+                        arrow.isVisible = false
+                        editBtn.isVisible = false
+                        mesaj.text = "Nu te-ai antrenat in aceasta zi"
+                    }
+                }
+
+
+                viewModel.postState(MainViewModel.UiState.Success)
+            }
+        }
+
+        calendar.calendarListener = listener
     }
 
     private fun forSettingWater(){

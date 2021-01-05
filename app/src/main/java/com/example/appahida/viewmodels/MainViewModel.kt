@@ -34,7 +34,20 @@ class MainViewModel @ViewModelInject constructor(
 
     val selectedDate = MutableStateFlow(Calendar.getInstance().timeInMillis)
 
-    //private val water_quantity = waterRepository.getWaterByDate(Date().time)
+
+    private val _uiState = MutableStateFlow<UiState>(UiState.Empty)
+    val uiState : StateFlow<UiState> = _uiState
+
+    fun postState(state : UiState){
+        _uiState.value = state
+    }
+
+    sealed class UiState{
+        object Success : UiState()
+        object Loading : UiState()
+        object Empty : UiState()
+    }
+
 
     private val water_quantity = combine(selectedDate){
         date -> selectedDate
@@ -118,31 +131,13 @@ class MainViewModel @ViewModelInject constructor(
     /***************************************************
      *********** WATER RELATED FUNCTIONS ***************
      ***************************************************/
-    var waterMax : MutableLiveData<Int> = MutableLiveData(2000)
-
-/*    fun getWater() : Flow<Int> {
-        return water_quantity
-    }*/
 
     fun addWater(waterToAdd : Int){
-        val currentWater = waterLive.value
-
-/*        if(currentWater?.size!! > 0){
-            val quantity = currentWater?.get(0).waterQty as Int
-
-            if(quantity < 10000){
-                currentWater[0].waterQty = quantity + waterToAdd
-                //water_quantity.postValue(currentWater + waterSize)
-                waterRepository.updateWater(currentWater[0])
-            }
-        }
-        else{*/
             val today = Calendar.getInstance().timeInMillis
             val waterItem = WaterDayItem(
                     waterToAdd,today)
 
             waterRepository.insertWater(waterItem)
-        //}
     }
 
     fun setWaterReminder(){
@@ -158,21 +153,6 @@ class MainViewModel @ViewModelInject constructor(
 
         Timber.d("Alarma setata pentru $time")
     }
-
-/*    fun subtractWater(){
-        val currentWater = water_quantity.value
-
-        if (currentWater != null) {
-            if(currentWater > 0){
-                if(currentWater < waterSize){
-                    water_quantity.postValue(0)
-                }
-                else{
-                    water_quantity.postValue(currentWater - waterSize)
-                }
-            }
-        }
-    }*/
 
     /***********WATER RELATED FUNCTIONS ****************/
 }

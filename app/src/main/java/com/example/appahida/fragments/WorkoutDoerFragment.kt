@@ -74,7 +74,7 @@ class WorkoutDoerFragment : Fragment(){
         }
 
         viewModel.exercicesForToday.observe(viewLifecycleOwner){
-            adapterHor.submitList(it)
+            //adapterHor.submitList(it)
         }
 
         binding.apply {
@@ -95,12 +95,16 @@ class WorkoutDoerFragment : Fragment(){
             }
 
             stopTimer.setOnClickListener {
-                WorkingService.isWorking.postValue(false)
-
                 val builder = AlertDialog.Builder(context)
                 builder.setMessage("Vrei sa inchei antrenamentul ?")
                         .setCancelable(true)
                         .setPositiveButton("Da"){ dialog, id ->
+                            WorkingService.timeWorkedInMilliseconds.value?.let { it1 ->
+                                viewModel.finishTodaysWorkout(
+                                    it1
+                                )
+                            }
+                            WorkingService.isWorking.postValue(false)
                             findNavController().navigate(R.id.action_workoutEditor_to_mainFragment)
                             sendCommandToService(ACTION_STOP_SERVICE)
                         }
