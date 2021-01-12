@@ -7,7 +7,9 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="blackos">#2B2B2B</color>
+    <color name="blackos">#272727</color>
+    <color name="verdiut">#F736452B</color>
+    <color name="blec">#222222</color>
     <color name="blackos2">#393939</color>
     <color name="griInchis">#EB0E1317</color>
     <color name="griInchisDeschis">#EB20282E</color>

@@ -1,5 +1,6 @@
 package com.example.appahida.alarms
 
+import android.app.AlarmManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -10,9 +11,24 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.example.appahida.MainActivity
 import com.example.appahida.R
+import timber.log.Timber
+import java.util.concurrent.TimeUnit
 
 class AlarmBroadcastReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
+
+/*        val extras = intent?.extras
+        val currentTime = extras?.getLong("next_notification")
+
+        if (context != null) {
+            if (currentTime != null) {
+                setNextAlarm(currentTime, context)
+            }
+        }*/
+
+        if (context != null) {
+            setNextAlarm(context)
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 
@@ -37,7 +53,7 @@ class AlarmBroadcastReceiver : BroadcastReceiver() {
             .setContentText("Nu uita sa bei apa !")
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
 
         // Get the Notification manager service
         val am = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -47,4 +63,19 @@ class AlarmBroadcastReceiver : BroadcastReceiver() {
 
         // Show a notification
         am.notify(id.toInt(), mBuilder.build())
-}}
+}
+
+    private fun setNextAlarm(context: Context){
+        val nextTime = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(30)
+
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+        val notificationIntent = Intent(context, AlarmBroadcastReceiver::class.java)
+        notificationIntent.putExtra("next_notification", nextTime)
+
+        val pendingIntent = PendingIntent.getBroadcast(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT)
+
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextTime, pendingIntent)
+    }
+
+}

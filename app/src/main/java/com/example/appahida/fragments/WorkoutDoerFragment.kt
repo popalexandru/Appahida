@@ -5,6 +5,7 @@ import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.view.*
+import android.widget.NumberPicker
 import android.widget.Toast
 import androidx.activity.addCallback
 import androidx.appcompat.widget.SearchView
@@ -18,21 +19,26 @@ import com.example.appahida.adapters.*
 import com.example.appahida.constants.Constants.ACTION_PAUSE_SERVICE
 import com.example.appahida.constants.Constants.ACTION_START_OR_RESUME
 import com.example.appahida.constants.Constants.ACTION_STOP_SERVICE
+import com.example.appahida.constants.Constants.countValues
+import com.example.appahida.constants.Constants.weightValues
 import com.example.appahida.databinding.WorkoutDoerLayoutBinding
+import com.example.appahida.db.workoutsdb.ExercicesWithReps
 import com.example.appahida.services.WorkingService
 import com.example.appahida.utils.Utility
 import com.example.appahida.viewmodels.MainViewModel
 import com.example.appahida.viewmodels.WorkoutDoerViewModel
 import com.example.appahida.viewmodels.WorkoutViewModel
+import com.google.android.material.textfield.TextInputEditText
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
 @AndroidEntryPoint
-class WorkoutDoerFragment : Fragment(){
+class WorkoutDoerFragment : Fragment(), WorkoutEditorListAdapter.FavClickListener{
     private var _binding : WorkoutDoerLayoutBinding? = null
     private val binding get() = _binding!!
 
     private val viewModel: WorkoutViewModel by activityViewModels()
+
     private var curTimeInMilis = 0L
     private var isWorking = false
 
@@ -56,7 +62,7 @@ class WorkoutDoerFragment : Fragment(){
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val adapterHor = WorkoutEditorListAdapter()
+        val adapterHor = WorkoutEditorListAdapter(this)
 
         WorkingService.timeWorkedInMilliseconds.observe(viewLifecycleOwner){
             curTimeInMilis = it
@@ -73,8 +79,16 @@ class WorkoutDoerFragment : Fragment(){
             }
         }
 
-        viewModel.exercicesForToday.observe(viewLifecycleOwner){
-            //adapterHor.submitList(it)
+        viewModel.exercicesForToday.observe(viewLifecycleOwner){ dayWithExercise ->
+            if(dayWithExercise != null){
+                if(dayWithExercise.exercices.size > 0){
+                    val exercicesList = dayWithExercise.exercices
+                    adapterHor.submitList(exercicesList)
+                }
+            }else{
+                findNavController().navigate(R.id.action_workoutEditor_to_mainFragment)
+                Toast.makeText(requireContext(), "Error", Toast.LENGTH_SHORT).show()
+            }
         }
 
         binding.apply {
@@ -100,6 +114,7 @@ class WorkoutDoerFragment : Fragment(){
                         .setCancelable(true)
                         .setPositiveButton("Da"){ dialog, id ->
                             WorkingService.timeWorkedInMilliseconds.value?.let { it1 ->
+                                Toast.makeText(requireContext(), "Workout finished", Toast.LENGTH_SHORT).show()
                                 viewModel.finishTodaysWorkout(
                                     it1
                                 )
@@ -126,5 +141,80 @@ class WorkoutDoerFragment : Fragment(){
                 it.action = action
                 requireContext().startService(it)
             }
+
+    override fun onFavListener(item: ExercicesWithReps) {
+        TODO("Not yet implemented")
+    }
+
+    override fun onAddClick(repsRecyclerView: RepAdapter, exId : Int) {
+        val builder = AlertDialog.Builder(context)
+        val customLayout = layoutInflater.inflate(R.layout.choose_rep_layout, null)
+
+        val inputRep = customLayout.findViewById(R.id.inputCount) as TextInputEditText
+        val inputWei = customLayout.findViewById(R.id.inputWeight) as TextInputEditText
+
+        val weightPicker = customLayout.findViewById(R.id.pickerWeight) as NumberPicker
+        val countPicker = customLayout.findViewById(R.id.pickerCount) as NumberPicker
+
+        weightPicker.displayedValues = weightValues
+        countPicker.displayedValues = countValues
+
+        weightPicker.wrapSelectorWheel
+        countPicker.wrapSelectorWheel
+
+        weightPicker.minValue = 0
+        weightPicker.maxValue = weightValues.size - 1
+
+        countPicker.minValue = 0
+        countPicker.maxValue = countValues.size - 1
+
+        if(viewModel.lastRepsAdded != 0 && viewModel.lastWeightAdded != 0){
+            weightPicker.value = viewModel.lastWeightAdded
+            countPicker.value = viewModel.lastRepsAdded
+
+            inputRep.setText(countPicker.value.toString())
+            inputWei.setText(weightPicker.value.toString())
+            //inputWei.setText(countValues[countPicker.value])
+            //inputWei.setText(weightValues[weightPicker.value])
+        }else{
+            inputWei.setText(weightValues[0])
+            inputRep.setText(countValues[0])
+        }
+
+
+
+        weightPicker.setOnValueChangedListener { _, value, i2 ->
+            inputWei.setText(weightValues[i2])
+        }
+
+        countPicker.setOnValueChangedListener { _, value, i2 ->
+            inputRep.setText(countValues[i2])
+        }
+
+        builder.setView(customLayout)
+                .setCancelable(true)
+                .setPositiveButton("Ok"){ dialog, id ->
+
+                    if(inputRep.text?.isNotEmpty() == true && inputWei.text?.isNotEmpty() == true){
+                        val rep = Integer.parseInt(inputRep.text.toString())
+                        val wei = Integer.parseInt(inputWei.text.toString())
+
+                        viewModel.addReps(wei, rep, exId)
+
+                        viewModel.lastWeightAdded = rep
+                        viewModel.lastRepsAdded = wei
+                    }else{
+                        Toast.makeText(
+                                requireContext(),
+                                "Valori invalide",
+                                Toast.LENGTH_SHORT
+                        ).show()
+                    }
+
+                }
+
+        val alertdialog = builder.create()
+        alertdialog.show()
+    }
 
 }

@@ -2,7 +2,6 @@ package com.example.appahida.fragments
 
 import android.animation.ValueAnimator
 import android.app.AlertDialog
-import android.app.ProgressDialog
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
@@ -13,42 +12,35 @@ import androidx.fragment.app.Fragment
 import androidx.activity.addCallback
 import androidx.core.view.isVisible
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.work.PeriodicWorkRequest
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
-import androidx.work.WorkRequest
 import com.example.appahida.R
 import com.example.appahida.adapters.ExercicesListAdapter
 import com.example.appahida.adapters.RepAdapter
-import com.example.appahida.constants.Constants
 import com.example.appahida.constants.Constants.ACTION_START_OR_RESUME
-import com.example.appahida.databinding.MainFragmentBinding
-import com.example.appahida.db.workoutsdb.Exercice
+import com.example.appahida.databinding.FragmentMainBinding
 import com.example.appahida.db.workoutsdb.ExercicesWithReps
-import com.example.appahida.db.workoutsdb.Reps
-import com.example.appahida.objects.RepCount
 import com.example.appahida.onVersionChanged
 import com.example.appahida.services.WorkingService
+import com.example.appahida.utils.Utility
 import com.example.appahida.viewmodels.MainViewModel
 import com.example.appahida.viewmodels.WorkoutViewModel
-import com.example.appahida.workers.WaterWorker
-import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
+import com.michalsvec.singlerowcalendar.calendar.CalendarChangesObserver
+import com.michalsvec.singlerowcalendar.calendar.CalendarViewManager
+import com.michalsvec.singlerowcalendar.calendar.SingleRowCalendarAdapter
+import com.michalsvec.singlerowcalendar.selection.CalendarSelectionManager
 import dagger.hilt.android.AndroidEntryPoint
 import devs.mulham.horizontalcalendar.HorizontalCalendar
-import devs.mulham.horizontalcalendar.utils.CalendarEventsPredicate
 import devs.mulham.horizontalcalendar.utils.HorizontalCalendarListener
-import kotlinx.android.synthetic.main.exercice_added_item.view.*
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
+import kotlinx.android.synthetic.main.calendar_item_unselected.view.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.time.LocalDate
+import java.text.SimpleDateFormat
 import java.util.*
-import java.util.concurrent.TimeUnit
 
 @AndroidEntryPoint
 class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClickListener {
@@ -56,79 +48,84 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
     companion object {
         fun newInstance() = MainFragment()
     }
+
     lateinit var workoutAdapter : ExercicesListAdapter
     lateinit var repsAdapter : RepAdapter
 
-    private var _binding : MainFragmentBinding? = null
+    private var isTodaysWorkoutDone = false
+
+    private var _binding : FragmentMainBinding? = null
     private val binding get() = _binding!!
+
     private val viewModel: MainViewModel by activityViewModels()
     private val workoutsViewModel : WorkoutViewModel by activityViewModels()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View {
-        _binding = MainFragmentBinding.inflate(layoutInflater)
+        _binding = FragmentMainBinding.inflate(layoutInflater)
         return binding.root
     }
 
+    // TODO: alert has not been initialized
     lateinit var alert : AlertDialog
-    lateinit var progressDialog : ProgressDialog
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        lifecycleScope.launchWhenStarted {
-            viewModel.uiState.collect {
-                when(it){
-                    is MainViewModel.UiState.Success -> {
-                            //alert.dismiss()
-                        progressDialog.dismiss()
-                    }
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
-                    is MainViewModel.UiState.Loading -> {
-/*                        val builder = AlertDialog.Builder(context)
+        val callback = requireActivity().onBackPressedDispatcher.addCallback(this){
+            if(pressedBack + 2000 > System.currentTimeMillis()){
+                val a = Intent(Intent.ACTION_MAIN)
+                a.addCategory(Intent.CATEGORY_HOME)
+                a.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
-                        val customLayout = layoutInflater.inflate(R.layout.loading_layout, null)
-
-                        builder.setView(customLayout)
-                            .setCancelable(true)
-
-                        alert = builder.create()
-                        alert.show()
-                        delay(400)*/
-
-                        progressDialog = ProgressDialog.show(requireContext(), "", "Loading..", true)
-                        progressDialog.show()
-                        delay(500)
-                    }
-
-                    else -> Unit
-                }
+                startActivity(a)
+            }else{
+                pressedBack = System.currentTimeMillis()
+                Toast.makeText(requireContext(), "Press back again to exit", Toast.LENGTH_SHORT).show()
             }
         }
+        callback.isEnabled = true
+    }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        Timber.d("onViewCreated")
 
         setHorizontalCalendar()
 
         viewModel.getExercices(this)
 
-        workoutsViewModel.todaysValue.observe(viewLifecycleOwner){
-            if(it == null){
-                Timber.d("Today entitiy not created, will create one..")
+        WorkingService.isWorking.observe(viewLifecycleOwner){
+            binding.fab.isVisible = it
+            binding.startWorkout.isVisible = it
+        }
 
+        binding.fab.setOnClickListener {
+            if(WorkingService.isWorking.value == true){
+                findNavController().navigate(R.id.action_mainFragment_to_workoutEditor)
+            }
+        }
+
+        workoutsViewModel.todaysValue.observe(viewLifecycleOwner){ today ->
+            if(today == null){
                 workoutsViewModel.insertDay(0, true)
             }else{
-                Timber.d("Today entitiy already existing for today")
-
-                if(it.isWorkoutDone){
-                    //getView()?.let { it1 -> Snackbar.make(it1, "Workout is done ! :) duration ${TimeUnit.MILLISECONDS.toSeconds(it.workoutDuration)}", Snackbar.LENGTH_SHORT).show() }
-                    binding.startWorkout.text = "Done - ${TimeUnit.MILLISECONDS.toSeconds(it.workoutDuration)}"
+                if(today.isWorkoutDone){
+                    isTodaysWorkoutDone = true
+                    //binding.startWorkout.visibility = View.GONE
+                    binding.workoutFinishedCV.visibility = View.VISIBLE
+                    binding.finishGroup.visibility = View.GONE
+                    binding.durataAntrenament.text = Utility.getFormattedDuration(today.workoutDuration)
                 }else{
+                    isTodaysWorkoutDone = false
+                    binding.workoutFinishedCV.visibility = View.GONE
                     binding.startWorkout.text = "INCEPE ANTRENAMENT"
+
+                    binding.finishGroup.visibility = View.VISIBLE
                 }
             }
         }
 
         workoutsViewModel.exercicesForToday.observe(viewLifecycleOwner){ dayWithExercise ->
-            Timber.d("Lista este $dayWithExercise")
-
             if(dayWithExercise != null){
                 if(dayWithExercise.exercices.size > 0){
                     val exercicesList = dayWithExercise.exercices
@@ -164,8 +161,6 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
         viewModel.waterLive.observe(viewLifecycleOwner){
             if(it != null){
 
-            //val item = it.get(0)
-            val item = it
             if(it > 1000){
                 binding.waterQty.setTextColor(Color.parseColor("#AAAA00"))
             }
@@ -179,8 +174,6 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
                 if((newValue - currentValue) > 900){
                     binding.waterQty.text = newValue.toString()
                     binding.progressWater.progress = newValue
-
-                    Timber.d("ed ${binding.progressWater.max}")
                 }else{
                     val valueAnimator = ValueAnimator.ofInt(currentValue, it)
                     valueAnimator.setDuration(700)
@@ -192,7 +185,6 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
                     valueAnimator.start()
                 }
 
-                Timber.d("Set water to ${it} ")
             }else{
                 binding.waterQty.text = "0"
                 binding.progressWater.progress = 0
@@ -206,16 +198,19 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
         binding.apply{
             adauga.setOnClickListener { findNavController().navigate(R.id.action_mainFragment_to_addWorkoutFragment)}
             arrow.setOnClickListener { findNavController().navigate(R.id.action_mainFragment_to_addWorkoutFragment) }
-            //editBtn.setOnClickListener { findNavController().navigate(R.id.action_mainFragment_to_workoutEditor) }
 
             startWorkout.setOnClickListener {
                 val builder = AlertDialog.Builder(context)
                 builder.setMessage("Vrei sa incepi antrenamentul ?")
                         .setCancelable(true)
                         .setPositiveButton("Da"){ dialog, id ->
-                            Toast.makeText(requireContext(), "Antrenamentul incepe..", Toast.LENGTH_SHORT).show()
-                            findNavController().navigate(R.id.action_mainFragment_to_workoutEditor)
-                            sendCommandToService(ACTION_START_OR_RESUME)
+                            if(workoutsViewModel.todaysValue.value?.isWorkoutDone == true){
+                                binding.startWorkout.isVisible = false
+                            }else{
+                                Toast.makeText(requireContext(), "Antrenamentul incepe..", Toast.LENGTH_SHORT).show()
+                                findNavController().navigate(R.id.action_mainFragment_to_workoutEditor)
+                                sendCommandToService(ACTION_START_OR_RESUME)
+                            }
                         }
                         .setNegativeButton("Nu") { dialog, id ->
                             // Dismiss the dialog
@@ -230,8 +225,7 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
                 builder.setMessage("Esti sigur ca vrei sa stergi antrenamentul ?")
                     .setCancelable(true)
                     .setPositiveButton("Da"){ dialog, id ->
-                        workoutsViewModel.deleteTodayExercices()
-                        //updateAdapter()
+                        workoutsViewModel.deleteToday()
                     }
                     .setNegativeButton("Nu") { dialog, id ->
                         // Dismiss the dialog
@@ -279,31 +273,71 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
                 .build()
 
         val listener = object : HorizontalCalendarListener(){
+
             override fun onDateSelected(date: Calendar?, position: Int) {
-                viewModel.postState(MainViewModel.UiState.Loading)
-                Timber.d("Date selected ${date?.timeInMillis}")
-
-                val dateSelectedStart = Calendar.getInstance()
-                dateSelectedStart.timeInMillis = date?.timeInMillis!!
-
-
-                dateSelectedStart.set(Calendar.HOUR_OF_DAY, 0)
-                dateSelectedStart.set(Calendar.MINUTE, 0)
-                dateSelectedStart.set(Calendar.SECOND, 1)
-                dateSelectedStart.set(Calendar.MILLISECOND, 0)
-
-                val time = dateSelectedStart.timeInMillis
+                val time = Calendar.getInstance().apply {
+                    timeInMillis = date?.timeInMillis!!
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 1)
+                    set(Calendar.MILLISECOND, 0)
+                }.timeInMillis
 
                 viewModel.selectedDate.value = time
                 workoutsViewModel.selectedDate.value = time
 
+/*                if (date != null) {
+                    binding.month .text = SimpleDateFormat("MMMM", Locale("ro", "RO")).format(date.time)
+                }*/
+
                 if(DateUtils.isToday(time)){
-                    /* its fine */
+                    binding.apply {
+                        mesaj.text = "Nu ai un antrenament inca"
+
+                        if(!isTodaysWorkoutDone){
+                            if(!editBtn.isVisible){
+                                editBtn.isVisible = true
+                            }
+
+                            if(!arrow.isVisible){
+                                arrow.isVisible = true
+                            }
+
+                            if(!mesaj.isVisible){
+                                mesaj.isVisible = true
+                            }
+
+                        }
+                    }
+                }else{
+                    binding.apply {
+                        if(!mesaj.text.equals("Nu te-ai antrenat in aceasta zi")){
+                            mesaj.text = "Nu te-ai antrenat in aceasta zi"
+                        }
+
+                        if(editBtn.isVisible){
+                            editBtn.visibility = View.GONE
+                        }
+
+                        if(arrow.isVisible){
+                            arrow.visibility = View.GONE
+                        }
+
+                        if(adauga.isVisible){
+                            adauga.visibility = View.GONE
+                        }
+                    }
+                }
+
+/*                if(DateUtils.isToday(time)){
+                    *//* its fine *//*
                         binding.apply {
                             adauga.isVisible = true
                             arrow.isVisible = true
-                            editBtn.isVisible = true
+                            //editBtn.isVisible = true
                             mesaj.text = "Nu ai un antrenament inca"
+                            finishGroup.visibility = View.GONE
+                            binding.startWorkout.visibility = View.VISIBLE
                         }
                 }else{
                     binding.apply {
@@ -312,10 +346,8 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
                         editBtn.isVisible = false
                         mesaj.text = "Nu te-ai antrenat in aceasta zi"
                     }
-                }
+                }*/
 
-
-                viewModel.postState(MainViewModel.UiState.Success)
             }
         }
 
@@ -329,9 +361,14 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
             builder.setView(inflater.inflate(R.layout.water_settings, null))
                 .setCancelable(true)
 
-            val alert = builder.create()
+/*            val alert = builder.create()
             alert.setContentView(R.layout.water_settings)
-            alert.show()
+            alert.show()*/
+
+            builder.create().apply {
+                setContentView(R.layout.water_settings)
+                show()
+            }
 
             val picker : NumberPicker = alert.findViewById(R.id.picker)
             val pickerMl : NumberPicker = alert.findViewById(R.id.picker_2)
@@ -388,10 +425,26 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
         viewModel.updateVersion(version)
     }
 
+    override fun startLoading() {
+        val builder = AlertDialog.Builder(context)
+
+        val customLayout = layoutInflater.inflate(R.layout.dialog_loading, null)
+
+        builder.setView(customLayout)
+            .setTitle("Sincronizare cu baza de date..")
+            .setCancelable(false)
+
+        alert = builder.create()
+        alert.window?.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+        alert.show()
+    }
+
+    override fun stopLoading() {
+        alert.dismiss()
+    }
+
     override fun onFavListener(item: ExercicesWithReps) {
-        //val ex = Exercice(item.ex)
         workoutsViewModel.deleteExercice(item.exercice)
-        //Toast.makeText(requireContext(), "trebuie impl", Toast.LENGTH_SHORT).show()
     }
 
     override fun onAddClick(repsRecyclerView: RepAdapter, exId : Int) {
@@ -400,7 +453,7 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
         val customLayout = layoutInflater.inflate(R.layout.choose_rep_layout, null)
 
         val inputRep = customLayout.findViewById(R.id.inputCount) as TextInputEditText
-        val inputWei = customLayout.findViewById(R.id.input_wei) as TextInputEditText
+        val inputWei = customLayout.findViewById(R.id.inputWeight) as TextInputEditText
 
         builder.setView(customLayout)
                 .setCancelable(true)
@@ -410,58 +463,52 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
                     val wei = Integer.parseInt(inputWei.text.toString())
 
                     workoutsViewModel.addReps(rep, wei, exId)
-/*
-                    repsRecyclerView.submitList(viewModel.list)
-                    repsRecyclerView.notifyDataSetChanged()*/
                 }
 
         val alertdialog = builder.create()
         alertdialog.show()
     }
 
-    fun updateAdapter(){
-        workoutAdapter.notifyDataSetChanged()
-    }
+    private var isListVisible = false
 
     private fun makeListVisible(){
-        binding.workoutRecyclerView.visibility = View.VISIBLE
-        binding.gantera.visibility = View.GONE
-        binding.mesaj.visibility = View.GONE
-        binding.editBtn.visibility = View.VISIBLE
-        binding.adauga.text = "Adauga exercitiu"
-        binding.deleteImg.visibility = View.VISIBLE
-        binding.startWorkout.visibility = View.VISIBLE
+        if(!isListVisible){
+            binding.workoutRecyclerView.visibility = View.VISIBLE
+            //binding.gantera.visibility = View.GONE
+            binding.mesaj.visibility = View.GONE
+            //binding.editBtn.visibility = View.VISIBLE
+            binding.adauga.text = "Adauga exercitiu"
+            binding.deleteImg.visibility = View.VISIBLE
+
+            if(workoutsViewModel.todaysValue.value?.isWorkoutDone == false){
+                binding.startWorkout.visibility = View.VISIBLE
+            }else{
+                binding.startWorkout.visibility = View.GONE
+            }
+
+            isListVisible = true
+            Timber.d("List made visible")
+        }
     }
 
     private fun hideList(){
-        binding.startWorkout.visibility = View.GONE
-        binding.deleteImg.visibility = View.GONE
-        binding.workoutRecyclerView.visibility = View.GONE
-        binding.gantera.visibility = View.VISIBLE
-        binding.mesaj.visibility = View.VISIBLE
-        binding.adauga.text = "Adauga un antrenament"
+        //TODO : card view flicker
+        if(isListVisible){
+            binding.deleteImg.visibility = View.GONE
+            binding.workoutRecyclerView.visibility = View.GONE
+            //binding.gantera.visibility = View.VISIBLE
+            binding.mesaj.visibility = View.VISIBLE
+            binding.adauga.text = "Adauga un antrenament"
+            binding.startWorkout.visibility = View.GONE
+
+            isListVisible = false
+            Timber.d("List made invisible")
+        }
+
     }
 
     var pressedBack = 0L
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        val callback = requireActivity().onBackPressedDispatcher.addCallback(this){
-            if(pressedBack + 2000 > System.currentTimeMillis()){
-                val a = Intent(Intent.ACTION_MAIN)
-                a.addCategory(Intent.CATEGORY_HOME)
-                a.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-
-                startActivity(a)
-            }else{
-                pressedBack = System.currentTimeMillis()
-                Toast.makeText(requireContext(), "Press back again to exit", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        callback.isEnabled = true
-    }
 
     private fun sendCommandToService(action : String) =
             Intent(requireContext(), WorkingService::class.java).also {
@@ -499,4 +546,127 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
 
     }*/
 
+    private fun setSingleLineCalender(){/*
+        calendar.time = Date()
+        currentMonth = calendar[Calendar.MONTH]*/
+
+        val myCalendarViewManager = object : CalendarViewManager{
+            override fun setCalendarViewResourceId(
+                    position: Int,
+                    date: Date,
+                    isSelected: Boolean
+            ): Int {
+
+                val cal = Calendar.getInstance()
+                cal.time = Date()
+
+                if(isSelected){
+                    return R.layout.calendar_item_selected
+                }
+
+                return R.layout.calendar_item_unselected
+            }
+
+            override fun bindDataToCalendarView(
+                    holder: SingleRowCalendarAdapter.CalendarViewHolder,
+                    date: Date,
+                    position: Int,
+                    isSelected: Boolean
+            ) {
+                holder.itemView.day.text = com.michalsvec.singlerowcalendar.utils.DateUtils.getDayNumber(date)
+                holder.itemView.dayName.text = SimpleDateFormat("EE", Locale("Romanian", "Romania")).format(date)
+            }
+        }
+
+
+
+
+/*        binding.calendarViews.apply {
+            calendarViewManager = myCalendarViewManager
+            calendarChangesObserver = myCalendarChangesObserver
+            calendarSelectionManager = mySelectionManager
+            futureDaysCount = 30
+            pastDaysCount = 10
+            includeCurrentDate = true
+            init()
+
+        }*/
+    }
+
+    private fun loadBannerAd(){
+        /*val adRequest = AdRequest.Builder().build()
+        binding.adView.loadAd(adRequest)
+
+        binding.adView.adListener = object : AdListener(){
+            override fun onAdFailedToLoad(p0: LoadAdError?) {
+                super.onAdFailedToLoad(p0)
+
+                Toast.makeText(requireContext(), "Ad failed ${p0?.message}", Toast.LENGTH_SHORT).show()
+            }
+
+            override fun onAdImpression() {
+                super.onAdImpression()
+
+                Toast.makeText(requireContext(), "impressed", Toast.LENGTH_SHORT).show()
+            }
+        }*/
+    }
+
+    private fun ads(){
+        /*
+        val config = RequestConfiguration.Bui+lder().setTestDeviceIds(Arrays.asList("DCB08AD74B27BF7C8694E3ACA6B194C9")).build()
+        MobileAds.setRequestConfiguration(config);
+
+        //MobileAds.initialize(context, R.string.test_ad_unit_id.toString())
+        val adLoader = AdLoader.Builder(context,  "ca-app-pub-4479200586800321/4400004732")
+                .forUnifiedNativeAd { unifiedNativeAd ->
+                    object : UnifiedNativeAd.OnUnifiedNativeAdLoadedListener{
+                        override fun onUnifiedNativeAdLoaded(p0: UnifiedNativeAd?) {
+                            val styles = NativeTemplateStyle.Builder().build()
+
+                            binding.myTemplate.setStyles(styles)
+                            binding.myTemplate.setNativeAd(unifiedNativeAd)
+                        }
+
+                    }
+
+
+                }
+            .withAdListener(object : AdListener() {
+                override fun onAdLoaded() {
+                    super.onAdLoaded()
+                    Toast.makeText(requireContext(), "Add loaded", Toast.LENGTH_SHORT).show()
+
+
+                }
+
+                override fun onAdOpened() {
+                    super.onAdOpened()
+
+                    Toast.makeText(requireContext(), "Add opened", Toast.LENGTH_SHORT).show()
+                }
+
+                override fun onAdFailedToLoad(p0: LoadAdError?) {
+                    super.onAdFailedToLoad(p0)
+
+                    Toast.makeText(requireContext(), "${p0?.message}", Toast.LENGTH_SHORT).show()
+                    Timber.d("ada ${p0?.message}")
+                }
+            })
+            .build()
+
+
+
+
+
+        adLoader.loadAd(AdRequest.Builder().build())
+
+
+        //loadBannerAd()
+        * */
+    }
+
+    private fun logMessage(message : String){
+        Timber.d(message)
+    }
 }

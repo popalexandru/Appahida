@@ -13,6 +13,12 @@ interface WorkoutsExercicesDAO {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertDay(day: Day)
 
+    @Delete
+    suspend fun deleteDay(day : Day)
+
+    @Query("UPDATE Day SET workoutDuration = :duration, isWorkoutDone = :done   WHERE dayId = :dayId")
+    suspend fun updateDay(dayId : Long, duration : Long, done : Boolean = true)
+
     @Insert
     suspend fun insertExercice(exercice: Exercice)
 

@@ -35,7 +35,7 @@ class FirebaseRepository @Inject constructor(
 
     fun getExercicesByCategory(category: String, search: String) : Flow<List<ExerciseItem>> = exercisesDAO.getExercicesByCategory(category, search)
 
-    fun getExercicesList() = CoroutineScope(Dispatchers.IO).launch{
+    fun getExercicesList(listener : onVersionChanged) = CoroutineScope(Dispatchers.IO).launch{
         database.collection(EXERCICES_FIREBASE_NAME)
                 .get()
                 .addOnSuccessListener {
@@ -51,6 +51,8 @@ class FirebaseRepository @Inject constructor(
 
                         Timber.d("Inserting $exerciceName")
                     }
+
+                    listener.stopLoading()
                 }
     }
 
@@ -66,14 +68,17 @@ class FirebaseRepository @Inject constructor(
 
 
                         if(version < versionNumber){
+
+                            listener.startLoading()
                             listener.onVersionChanged(versionNumber)
+
                             Timber.d("Version changed to $versionNumber")
 
                             CoroutineScope(Dispatchers.IO).launch {
                                 exercisesDAO.deleteAll()
                                 Timber.d("Deleting existing database")
 
-                                getExercicesList()
+                                getExercicesList(listener)
                             }
 
                         }else{

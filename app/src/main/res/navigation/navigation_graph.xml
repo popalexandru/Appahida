@@ -14,7 +14,7 @@
         android:id="@+id/mainFragment"
         android:name="com.example.appahida.fragments.MainFragment"
         android:label="main_fragment"
-        tools:layout="@layout/main_fragment" >
+        tools:layout="@layout/fragment_main" >
         <action
             android:id="@+id/action_mainFragment_to_addWorkoutFragment"
             app:enterAnim="@anim/slide_in_right"
@@ -28,12 +28,6 @@
     </fragment>
 
     <fragment
-        android:id="@+id/planWorkoutFragment"
-        android:name="com.example.appahida.fragments.PlanWorkoutFragment"
-        android:label="PlanWorkoutFragment" >
-    </fragment>
-
-    <fragment
         android:id="@+id/addWorkoutFragment"
         android:name="com.example.appahida.fragments.AddWorkoutFragment"
         android:label="AddWorkoutFragment" >
@@ -43,15 +37,15 @@
             app:enterAnim="@anim/fade__in"
             app:exitAnim="@anim/slide_out_right"/>
     </fragment>
+
     <fragment
         android:id="@+id/workoutEditor"
         android:name="com.example.appahida.fragments.WorkoutDoerFragment"
-        android:label="WorkoutEditor"
-        app:enterAnim="@anim/fade__in"
-        app:exitAnim="@anim/slide_out_right" >
+        android:label="WorkoutEditor" >
         <action
             android:id="@+id/action_workoutEditor_to_mainFragment"
-            app:destination="@id/mainFragment" />
+            app:destination="@id/mainFragment"
+            app:exitAnim="@anim/slide_out_bottom" />
     </fragment>
 
 </navigation>

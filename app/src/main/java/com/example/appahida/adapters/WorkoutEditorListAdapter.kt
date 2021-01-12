@@ -14,7 +14,7 @@ import com.example.appahida.db.workoutsdb.ExercicesWithReps
 import kotlinx.android.synthetic.main.exercice_added_item.view.*
 import timber.log.Timber
 
-class WorkoutEditorListAdapter() : ListAdapter<ExercicesWithReps, WorkoutEditorListAdapter.CakeViewHolder>(
+class WorkoutEditorListAdapter(private val listener : FavClickListener) : ListAdapter<ExercicesWithReps, WorkoutEditorListAdapter.CakeViewHolder>(
     DiffCallback()
 ){
 
@@ -25,13 +25,15 @@ class WorkoutEditorListAdapter() : ListAdapter<ExercicesWithReps, WorkoutEditorL
         val adapter = RepAdapter()
         //binding.repsRecyclerView.adapter = adapter
 
-        return CakeViewHolder(binding)
+        return CakeViewHolder(binding, listener)
     }
 
     override fun onBindViewHolder(holder: CakeViewHolder, position: Int) {
         val currentCake = getItem(position)
 
-/*        val repsList = currentCake.reps
+        val repsList = currentCake.reps
+
+
         var elAdaptero = RepAdapter()
 
         holder.itemView.repsRecyclerView.apply {
@@ -40,11 +42,12 @@ class WorkoutEditorListAdapter() : ListAdapter<ExercicesWithReps, WorkoutEditorL
             adapter = elAdaptero
         }
 
-        elAdaptero.submitList(repsList)*/
+        elAdaptero.submitList(repsList)
+
         holder.bind(currentCake)
     }
 
-    inner class CakeViewHolder(private val binding : WorkoutSliderItemBinding) : RecyclerView.ViewHolder(binding.root){
+    inner class CakeViewHolder(private val binding : WorkoutSliderItemBinding, private val listener: FavClickListener) : RecyclerView.ViewHolder(binding.root){
 
         init {
 
@@ -57,11 +60,11 @@ class WorkoutEditorListAdapter() : ListAdapter<ExercicesWithReps, WorkoutEditorL
                         }
                     }
 
-/*                    addRepImage.setOnClickListener {
+                    addReps.setOnClickListener {
                         Timber.d("Add image clicked")
 
                         getItem(adapterPosition).exercice.exId?.let { it1 -> listener.onAddClick(varticalAdapter, it1) }
-                    }*/
+                    }
                 }
         }
 

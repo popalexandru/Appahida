@@ -16,6 +16,10 @@
         android:theme="@style/Theme.Appahida"
         android:usesCleartextTraffic="true">
 
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-4479200586800321~6708611487"/>
+
         <service
             android:name=".services.WorkingService"
             android:foregroundServiceType="location" />

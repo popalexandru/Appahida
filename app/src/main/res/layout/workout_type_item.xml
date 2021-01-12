@@ -6,7 +6,7 @@
     app:cardElevation="4dp"
     android:elevation="4dp"
     android:id="@+id/layout"
-    app:cardBackgroundColor="@color/greos"
+    app:cardBackgroundColor="@color/blackos"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
         <LinearLayout

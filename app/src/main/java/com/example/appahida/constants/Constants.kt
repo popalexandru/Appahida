@@ -10,6 +10,9 @@ object Constants {
     const val CARDIO = 5
     const val PICIOARE = 6
 
+    val weightValues = arrayOf("10", "20", "30", "40", "50", "60", "70", "80", "90", "100", "110", "120")
+    val countValues = arrayOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12","13", "14", "15")
+
     const val EXERCICES_DATABASE_NAME = "exercices_database"
     const val WATER_DATABASE_NAME = "water_database"
     const val WORKOUT_DATABASE_NAME = "workout_database"

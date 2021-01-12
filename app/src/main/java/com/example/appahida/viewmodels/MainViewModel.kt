@@ -86,24 +86,6 @@ class MainViewModel @ViewModelInject constructor(
 
     val list : MutableList<RepCount> = mutableListOf<RepCount>()
 
-    fun addWorkoutToList(exerciseItem: ExerciseToAdd) = viewModelScope.launch{
-        workoutsList.add(exerciseItem)
-        Timber.d("$workoutsList")
-        workoutsFlow.value = workoutsList
-    }
-
-    fun clearList(){
-        workoutsList.clear()
-        workoutsFlow.value = workoutsList
-    }
-
-    fun getWorkouts() : LiveData<List<ExerciseToAdd>>{
-        return workoutsFlow
-    }
-    fun insertExercice(exerciseItem: ExerciseItem) = viewModelScope.launch(Dispatchers.IO){
-        repository.insertExercise(exerciseItem)
-    }
-
     private val worksFlow = combine(
             categoryQuery,
             searchQuery
@@ -113,7 +95,6 @@ class MainViewModel @ViewModelInject constructor(
         repository.getExercicesByCategory(query, search)
     }
 
-    //val exercices = repository.getExercicesByCategory("").asLiveData()
     val exercices = worksFlow.asLiveData()
 
     fun getExercices(listener : onVersionChanged) = viewModelScope.launch(){
@@ -141,15 +122,18 @@ class MainViewModel @ViewModelInject constructor(
     }
 
     fun setWaterReminder(){
-        val time = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(1)
+        //val time = System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1)
+        val time = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(30)
 
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
         val notificationIntent = Intent(context, AlarmBroadcastReceiver::class.java)
+        notificationIntent.putExtra("next_notification", time)
 
-        val pendingIntent = PendingIntent.getBroadcast(context, 0, notificationIntent, 0)
+        val pendingIntent = PendingIntent.getBroadcast(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT)
 
-        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, time, TimeUnit.HOURS.toMillis(3), pendingIntent)
+        //alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, time, TimeUnit.HOURS.toMillis(3), pendingIntent)
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, time, pendingIntent)
 
         Timber.d("Alarma setata pentru $time")
     }

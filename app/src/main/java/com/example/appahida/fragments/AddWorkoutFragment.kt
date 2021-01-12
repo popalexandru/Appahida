@@ -16,7 +16,7 @@ import coil.load
 import com.example.appahida.R
 import com.example.appahida.adapters.CategoryAdapter
 import com.example.appahida.adapters.ExercicesAdapter
-import com.example.appahida.databinding.AddWorkoutBinding
+import com.example.appahida.databinding.FragmentAddworkoutBinding
 import com.example.appahida.db.exercicesDB.ExerciseItem
 import com.example.appahida.objects.ExerciseToAdd
 import com.example.appahida.objects.WorkoutCategory
@@ -27,7 +27,7 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class AddWorkoutFragment : Fragment(), CategoryAdapter.onCategoryClick, ExercicesAdapter.FavClickListener {
-    private var _binding : AddWorkoutBinding? = null
+    private var _binding : FragmentAddworkoutBinding? = null
     private val binding get() = _binding!!
 
     private lateinit var searchView: SearchView
@@ -48,7 +48,7 @@ class AddWorkoutFragment : Fragment(), CategoryAdapter.onCategoryClick, Exercice
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View {
-        _binding = AddWorkoutBinding.inflate(layoutInflater)
+        _binding = FragmentAddworkoutBinding.inflate(layoutInflater)
         return binding.root
     }
 
@@ -122,7 +122,7 @@ class AddWorkoutFragment : Fragment(), CategoryAdapter.onCategoryClick, Exercice
 
     override fun onHelpClick(item: ExerciseItem) {
         val builder = AlertDialog.Builder(context)
-        val customLayout = layoutInflater.inflate(R.layout.exercise_helper, null)
+        val customLayout = layoutInflater.inflate(R.layout.dialog_exercice_description, null)
 
         val exName : TextView = customLayout.findViewById(R.id.exTitle)
         val exImg : ImageView = customLayout.findViewById(R.id.exImg)

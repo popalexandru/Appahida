@@ -1,6 +1,7 @@
 package com.example.appahida.viewmodels
 
 import android.content.Context
+import android.widget.Toast
 import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.*
 import com.example.appahida.db.workoutsdb.Exercice
@@ -14,7 +15,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import timber.log.Timber
 import java.util.*
-import java.util.concurrent.TimeUnit
 
 
 class WorkoutViewModel @ViewModelInject constructor(
@@ -22,6 +22,9 @@ class WorkoutViewModel @ViewModelInject constructor(
         private val workoutRepository: WorkoutRepository
 ) : ViewModel() {
     //val selectedDate = MutableStateFlow(Calendar.getInstance().timeInMillis)
+
+    var lastWeightAdded = 0
+    var lastRepsAdded = 0
 
     val selectedDate = MutableStateFlow(Calendar.getInstance().apply {
         set(Calendar.HOUR_OF_DAY, 0)
@@ -46,10 +49,14 @@ class WorkoutViewModel @ViewModelInject constructor(
     val todaysValue = todaysFlow.asLiveData()
 
     fun finishTodaysWorkout(duration : Long){
-        todaysValue.value?.setworkoutDuration(duration)
-        todaysValue.value?.finishWorkout()
+        val todaysTimestamp = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 1)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
 
-        todaysValue.value?.let { workoutRepository.updateDay(it) }
+        workoutRepository.updateDay(todaysTimestamp, duration)
     }
 
     fun insertExercice(exercice : ExerciseToAdd){
@@ -83,9 +90,11 @@ class WorkoutViewModel @ViewModelInject constructor(
         workoutRepository.insertRep(newRep)
     }
 
-    fun deleteTodayExercices(){
-        val today = Calendar.getInstance().timeInMillis
+    fun deleteToday(){
+        val todayRecord = exercicesForToday.value
 
-        workoutRepository.deleteTodaysWorkout(today)
+        if (todayRecord != null) {
+            workoutRepository.deleteTodayRecord(todayRecord)
+        }
     }
 }

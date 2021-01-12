@@ -16,8 +16,8 @@ class WorkoutRepository @Inject constructor(
         val workoutExercicesDAO: WorkoutsExercicesDAO
 ) {
 
-    fun updateDay(day: Day) = CoroutineScope(Dispatchers.IO).launch {
-        workoutExercicesDAO.insertDay(day)
+    fun updateDay(dayId : Long, duration : Long) = CoroutineScope(Dispatchers.IO).launch {
+        workoutExercicesDAO.updateDay(dayId, duration, true)
     }
 
     fun getDayWorkouts(dayId : Long): Flow<DayWithExercices> {
@@ -59,8 +59,8 @@ class WorkoutRepository @Inject constructor(
         workoutExercicesDAO.insertReps(reps)
     }
 
-    fun deleteTodaysWorkout(time : Long) = CoroutineScope(Dispatchers.IO).launch {
-        val beginOfDay = Calendar.getInstance()
+    fun deleteTodayRecord(day : DayWithExercices) = CoroutineScope(Dispatchers.IO).launch {
+        /*val beginOfDay = Calendar.getInstance()
         val endOfDay = Calendar.getInstance()
 
         beginOfDay.timeInMillis = time
@@ -71,10 +71,15 @@ class WorkoutRepository @Inject constructor(
 
 
         endOfDay.set(Calendar.HOUR_OF_DAY, 23)
-        endOfDay.set(Calendar.MINUTE, 59)
+        endOfDay.set(Calendar.MINUTE, 59)*/
 
-        workoutExercicesDAO.deleteTodays(beginOfDay.timeInMillis, endOfDay.timeInMillis)
-        workoutExercicesDAO.deleteTodaysEx(beginOfDay.timeInMillis, endOfDay.timeInMillis)
+        val exercicesToDelete = day.exercices
+
+        for(exercice in exercicesToDelete){
+            workoutExercicesDAO.deleteExercice(exercice.exercice)
+        }
+
+        workoutExercicesDAO.deleteDay(day.day)
     }
 
     fun checkToday(timestamp : Long) : Flow<Day>{

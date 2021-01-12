@@ -6,65 +6,105 @@
     android:padding="30dp"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <com.google.android.material.textfield.TextInputLayout
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/repCount"
-        android:textColor="#000000"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent">
+        android:orientation="vertical">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/inputCount"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:drawableEnd="@drawable/ic_weight"
-            android:inputType="number"
-            android:hint="greutate"
-            android:singleLine="true" />
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal">
 
-    </com.google.android.material.textfield.TextInputLayout>
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_weight="1"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/repCount"
+                android:textColor="#000000"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text=" kg"
-        app:layout_constraintLeft_toRightOf="@id/repCount"
-        app:layout_constraintTop_toTopOf="@id/repCount"
-        app:layout_constraintBottom_toBottomOf="@id/repCount"/>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/inputWeight"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:inputType="number"
+                    android:hint="greutate"
+                    android:singleLine="true" />
 
+            </com.google.android.material.textfield.TextInputLayout>
 
-    <com.google.android.material.textfield.TextInputLayout
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/repWei"
-        android:text="8"
-        android:textColor="#000000"
-        app:layout_constraintTop_toBottomOf="@id/repCount"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent" >
+            <NumberPicker
+                android:id="@+id/pickerWeight"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintLeft_toRightOf="@id/repCount"
+                app:layout_constraintBottom_toBottomOf="@id/repCount"
+                app:layout_constraintTop_toTopOf="@id/repCount"/>
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/input_wei"
-            android:drawableEnd="@drawable/ic_rep"
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" kg"
+                app:layout_constraintLeft_toRightOf="@id/repCount"
+                app:layout_constraintTop_toTopOf="@id/repCount"
+                app:layout_constraintBottom_toBottomOf="@id/repCount"/>
+
+        </LinearLayout>
+
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:hint="repetari"
-            android:inputType="number"
-            android:singleLine="true" />
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal">
 
-    </com.google.android.material.textfield.TextInputLayout>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text=" reps"
-        app:layout_constraintLeft_toRightOf="@id/repWei"
-        app:layout_constraintTop_toTopOf="@id/repWei"
-        app:layout_constraintBottom_toBottomOf="@id/repWei"/>
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:id="@+id/repWei"
+                android:text="8"
+                android:textColor="#000000"
+                app:layout_constraintTop_toBottomOf="@id/repCount"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent" >
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/inputCount"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:hint="repetari"
+                    android:inputType="number"
+                    android:singleLine="true" />
+
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <NumberPicker
+                android:id="@+id/pickerCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintLeft_toRightOf="@id/repCount"
+                app:layout_constraintBottom_toBottomOf="@id/repCount"
+                app:layout_constraintTop_toTopOf="@id/repCount"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" reps"
+                app:layout_constraintLeft_toRightOf="@id/repWei"
+                app:layout_constraintTop_toTopOf="@id/repWei"
+                app:layout_constraintBottom_toBottomOf="@id/repWei"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
