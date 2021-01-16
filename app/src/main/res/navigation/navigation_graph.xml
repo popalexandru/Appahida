@@ -36,6 +36,14 @@
             app:destination="@id/mainFragment"
             app:enterAnim="@anim/fade__in"
             app:exitAnim="@anim/slide_out_right"/>
+
+        <argument
+            android:name="exchange"
+            app:argType="string"
+            android:defaultValue=""/>
+        <action
+            android:id="@+id/action_addWorkoutFragment_to_workoutEditor"
+            app:destination="@id/workoutEditor" />
     </fragment>
 
     <fragment
@@ -46,6 +54,13 @@
             android:id="@+id/action_workoutEditor_to_mainFragment"
             app:destination="@id/mainFragment"
             app:exitAnim="@anim/slide_out_bottom" />
+        <action
+            android:id="@+id/action_workoutEditor_to_addWorkoutFragment"
+            app:destination="@id/addWorkoutFragment"
+            app:enterAnim="@anim/fade__in"
+            app:exitAnim="@anim/slide_out_right" >
+
+        </action>
     </fragment>
 
 </navigation>

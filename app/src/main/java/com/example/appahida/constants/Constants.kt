@@ -25,6 +25,8 @@ object Constants {
     const val EXERCICE_DES = "Description"
     const val EXERCICE_CAT = "Category"
 
+    const val EXERCICE_EXCHANGE = "EXERCICE_EXCHANGE"
+
     const val TIMER_UPDATE_INTERVAL = 50L
 
     const val ACTION_START_OR_RESUME = "ACTION_START_OR_RESUME"

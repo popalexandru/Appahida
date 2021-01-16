@@ -2,6 +2,7 @@ package com.example.appahida.db.workoutsdb
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import java.io.Serializable
 
 @Entity
 data class Exercice(
@@ -11,4 +12,4 @@ data class Exercice(
         val name : String,
         val desc : String,
         val image : String
-)
+) : Serializable

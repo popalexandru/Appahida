@@ -4,6 +4,7 @@ import android.animation.ValueAnimator
 import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.text.format.DateUtils
 import android.view.*
@@ -11,10 +12,12 @@ import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.activity.addCallback
 import androidx.core.view.isVisible
+import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
+import coil.load
 import com.example.appahida.R
 import com.example.appahida.adapters.ExercicesListAdapter
 import com.example.appahida.adapters.RepAdapter
@@ -26,6 +29,15 @@ import com.example.appahida.services.WorkingService
 import com.example.appahida.utils.Utility
 import com.example.appahida.viewmodels.MainViewModel
 import com.example.appahida.viewmodels.WorkoutViewModel
+import com.google.android.ads.nativetemplates.NativeTemplateStyle
+import com.google.android.ads.nativetemplates.TemplateView
+import com.google.android.gms.ads.AdListener
+import com.google.android.gms.ads.AdLoader
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.formats.UnifiedNativeAd
+import com.google.android.gms.ads.formats.UnifiedNativeAdView
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.textfield.TextInputEditText
 import com.michalsvec.singlerowcalendar.calendar.CalendarChangesObserver
 import com.michalsvec.singlerowcalendar.calendar.CalendarViewManager
@@ -35,6 +47,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import devs.mulham.horizontalcalendar.HorizontalCalendar
 import devs.mulham.horizontalcalendar.utils.HorizontalCalendarListener
 import kotlinx.android.synthetic.main.calendar_item_unselected.view.*
+import kotlinx.android.synthetic.main.unified_ad_view.view.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -52,6 +65,8 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
     lateinit var workoutAdapter : ExercicesListAdapter
     lateinit var repsAdapter : RepAdapter
 
+    lateinit var bottomSheetBehavior: BottomSheetBehavior<NestedScrollView>
+
     private var isTodaysWorkoutDone = false
 
     private var _binding : FragmentMainBinding? = null
@@ -62,6 +77,8 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View {
+        logMessage("onCreateView")
+
         _binding = FragmentMainBinding.inflate(layoutInflater)
         return binding.root
     }
@@ -70,7 +87,10 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
     lateinit var alert : AlertDialog
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        logMessage("onCreate")
         super.onCreate(savedInstanceState)
+
+        //loadNativeAds()
 
         val callback = requireActivity().onBackPressedDispatcher.addCallback(this){
             if(pressedBack + 2000 > System.currentTimeMillis()){
@@ -87,23 +107,34 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
         callback.isEnabled = true
     }
 
+    private var isWorking = false
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         Timber.d("onViewCreated")
 
+        setupBottomSheet()
         setHorizontalCalendar()
 
         viewModel.getExercices(this)
 
-        WorkingService.isWorking.observe(viewLifecycleOwner){
-            binding.fab.isVisible = it
-            binding.startWorkout.isVisible = it
+        WorkingService.isWorking.observe(viewLifecycleOwner){ workoutOngoing ->
+            //binding.fab.isVisible = it
+            binding.startWorkout.isVisible = workoutOngoing
+
+            if(workoutOngoing){
+                bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+            }else{
+                bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+            }
+
+            isWorking = workoutOngoing
         }
 
-        binding.fab.setOnClickListener {
+/*        binding.fab.setOnClickListener {
             if(WorkingService.isWorking.value == true){
                 findNavController().navigate(R.id.action_mainFragment_to_workoutEditor)
             }
-        }
+        }*/
 
         workoutsViewModel.todaysValue.observe(viewLifecycleOwner){ today ->
             if(today == null){
@@ -258,6 +289,53 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
 
     }
 
+    private fun setupBottomSheet(){
+        val bottomSheet = binding.bottomSheet as NestedScrollView
+        bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet)
+
+        /* show/hide button */
+        val showHideButton = binding.toggleButton
+        showHideButton?.setOnCheckedChangeListener { _, checked ->
+            if(checked){
+                bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+            }else{
+                bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+            }
+        }
+
+        /* bottom sheet callback */
+        bottomSheetBehavior.addBottomSheetCallback(object :
+        BottomSheetBehavior.BottomSheetCallback(){
+            override fun onStateChanged(bottomSheet: View, newState: Int) {
+                when(newState){
+                    BottomSheetBehavior.STATE_COLLAPSED -> {
+                        showHideButton?.isChecked = false
+                    }
+
+                    BottomSheetBehavior.STATE_EXPANDED -> {
+                        showHideButton?.isChecked = true
+                    }
+
+                    else -> Unit
+                }
+            }
+
+            override fun onSlide(bottomSheet: View, slideOffset: Float) {
+                System.out.println("sliding $slideOffset")
+            }
+
+        })
+
+        if(isWorking){
+            bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+        }else{
+            bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+        }
+
+        bottomSheet.isVisible = isWorking
+    }
+
+
     private fun setHorizontalCalendar(){
         val startDate = Calendar.getInstance()
         startDate.add(Calendar.MONTH, -1)
@@ -286,7 +364,7 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
                 viewModel.selectedDate.value = time
                 workoutsViewModel.selectedDate.value = time
 
-/*                if (date != null) {
+/*              if (date != null) {
                     binding.month .text = SimpleDateFormat("MMMM", Locale("ro", "RO")).format(date.time)
                 }*/
 
@@ -358,20 +436,21 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
         binding.settingsButton.setOnClickListener {
             val builder = AlertDialog.Builder(context)
             val inflater = requireActivity().layoutInflater
+
             builder.setView(inflater.inflate(R.layout.water_settings, null))
                 .setCancelable(true)
 
-/*            val alert = builder.create()
-            alert.setContentView(R.layout.water_settings)
-            alert.show()*/
+            val thisAlert = builder.create()
+            thisAlert.setContentView(R.layout.water_settings)
+            thisAlert.show()
 
-            builder.create().apply {
+/*            builder.create().apply {
                 setContentView(R.layout.water_settings)
                 show()
-            }
+            }*/
 
-            val picker : NumberPicker = alert.findViewById(R.id.picker)
-            val pickerMl : NumberPicker = alert.findViewById(R.id.picker_2)
+            val picker : NumberPicker = thisAlert.findViewById(R.id.picker)
+            val pickerMl : NumberPicker = thisAlert.findViewById(R.id.picker_2)
 
             val ml = arrayOf("ml")
             pickerMl.displayedValues = ml
@@ -383,7 +462,7 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
             picker.maxValue = 15
 
 
-            alert.setOnCancelListener {
+            thisAlert.setOnCancelListener {
                 val value = Integer.parseInt(values[picker.value])
                 if(value > 0){
                     viewModel.updateWaterMax(value)
@@ -668,5 +747,42 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
 
     private fun logMessage(message : String){
         Timber.d(message)
+    }
+
+    private fun loadNativeAds(){
+        val builder = AdLoader.Builder(requireContext(), resources.getString(R.string.native_ad_unit_id))
+
+        val adLoader = builder.forUnifiedNativeAd(UnifiedNativeAd.OnUnifiedNativeAdLoadedListener {
+/*            val styles = NativeTemplateStyle.Builder().withMainBackgroundColor(ColorDrawable(resources.getColor(R.color.blackos))).build()
+
+            val template = activity?.findViewById(R.id.my_template) as TemplateView
+            template.setStyles(styles)
+            template.setNativeAd(it)*/
+
+            val adView = layoutInflater.inflate(R.layout.unified_ad_view, null) as UnifiedNativeAdView
+
+            adView.ad_headline.text = it.headline
+            adView.ad_app_icon.load(it.icon.uri)
+
+            adView.setNativeAd(it)
+            //adView.removeAllViews()
+
+            //binding.myTemplate?.removeAllViews()
+            //binding.myTemplate?.addView(adView)
+
+        }).withAdListener(object : AdListener(){
+            override fun onAdFailedToLoad(p0: LoadAdError?) {
+                super.onAdFailedToLoad(p0)
+
+                Toast.makeText(requireContext(), "Failed ${p0?.message}", Toast.LENGTH_SHORT).show()
+            }
+
+            override fun onAdLoaded() {
+                super.onAdLoaded()
+
+            }
+        }).build()
+
+        adLoader.loadAd(AdRequest.Builder().build())
     }
 }

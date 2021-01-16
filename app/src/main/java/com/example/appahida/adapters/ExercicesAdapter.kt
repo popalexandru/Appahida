@@ -14,6 +14,7 @@ class ExercicesAdapter(private val listener : FavClickListener) : ListAdapter<Ex
     DiffCallback()
 ){
 
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CakeViewHolder {
         val binding = ExerciceItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
 

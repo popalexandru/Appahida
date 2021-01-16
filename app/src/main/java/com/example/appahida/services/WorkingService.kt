@@ -36,11 +36,15 @@ import javax.inject.Inject
 class WorkingService : LifecycleService() {
     var isFirstWorkout = true
     var serviceKilled = false
+    var isFirstPause = true
 
     private val timeWorkedInSeconds = MutableLiveData<Long>(0)
 
     @Inject
     lateinit var baseNotificationBuilder : NotificationCompat.Builder
+
+    private var isPauseEnabled = true
+    private var pauseTimer = 30L
 
     lateinit var currentNotification : NotificationCompat.Builder
 
@@ -53,6 +57,7 @@ class WorkingService : LifecycleService() {
     companion object {
         val isWorking = MutableLiveData<Boolean>(false)
         val timeWorkedInMilliseconds = MutableLiveData<Long>(0)
+        val timePause = MutableLiveData<Long>(0)
     }
 
     override fun onCreate() {
@@ -70,6 +75,11 @@ class WorkingService : LifecycleService() {
         timeStarted = System.currentTimeMillis()
         isTimerEnabled = true
 
+        if(isFirstPause){
+            timePause.postValue(pauseTimer)
+            isFirstPause = false
+        }
+
         CoroutineScope(Dispatchers.Main).launch {
             while(isWorking.value!!){
                 lapTime = System.currentTimeMillis() - timeStarted
@@ -78,6 +88,12 @@ class WorkingService : LifecycleService() {
                 if(timeWorkedInMilliseconds.value!! >= lastSecondTimestamp + 1000L){
                     timeWorkedInSeconds.postValue(timeWorkedInSeconds.value!! + 1)
                     lastSecondTimestamp += 1000L
+
+                    if(isPauseEnabled){
+                        if(pauseTimer > 0 && timePause.value!! > 0){
+                            timePause.postValue(timePause.value!! - 1)
+                        }
+                    }
                 }
                 delay(Constants.TIMER_UPDATE_INTERVAL)
             }

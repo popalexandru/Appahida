@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.*
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.addCallback
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
@@ -13,17 +14,28 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import coil.load
+import com.efaso.admob_advanced_native_recyvlerview.AdmobNativeAdAdapter
 import com.example.appahida.R
 import com.example.appahida.adapters.CategoryAdapter
 import com.example.appahida.adapters.ExercicesAdapter
+import com.example.appahida.constants.Constants
 import com.example.appahida.databinding.FragmentAddworkoutBinding
 import com.example.appahida.db.exercicesDB.ExerciseItem
+import com.example.appahida.db.workoutsdb.Exercice
 import com.example.appahida.objects.ExerciseToAdd
 import com.example.appahida.objects.WorkoutCategory
 import com.example.appahida.utils.onQueryTextChanged
 import com.example.appahida.viewmodels.MainViewModel
 import com.example.appahida.viewmodels.WorkoutViewModel
+import com.google.android.gms.ads.AdListener
+import com.google.android.gms.ads.AdLoader
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.formats.UnifiedNativeAd
+import com.google.android.gms.ads.formats.UnifiedNativeAdView
+import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.android.synthetic.main.unified_ad_view.view.*
 
 @AndroidEntryPoint
 class AddWorkoutFragment : Fragment(), CategoryAdapter.onCategoryClick, ExercicesAdapter.FavClickListener {
@@ -31,6 +43,9 @@ class AddWorkoutFragment : Fragment(), CategoryAdapter.onCategoryClick, Exercice
     private val binding get() = _binding!!
 
     private lateinit var searchView: SearchView
+    private  var exerciceExchange = false
+    private lateinit var exToDelete : Exercice
+
     private val viewModel: MainViewModel by activityViewModels()
     private val workoutsViewModel : WorkoutViewModel by activityViewModels()
 
@@ -44,6 +59,8 @@ class AddWorkoutFragment : Fragment(), CategoryAdapter.onCategoryClick, Exercice
         }
 
         callback.isEnabled = true
+
+        readIntent()
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
@@ -70,7 +87,9 @@ class AddWorkoutFragment : Fragment(), CategoryAdapter.onCategoryClick, Exercice
             veritcalRecycler.apply{
                 layoutManager = LinearLayoutManager(context)
                 hasFixedSize()
-                adapter = adaptere
+                //adapter = adaptere
+
+                loadNativeAds(adaptere)
 
                 addItemDecoration(DividerItemDecoration(this.context, DividerItemDecoration.VERTICAL))
             }
@@ -113,11 +132,18 @@ class AddWorkoutFragment : Fragment(), CategoryAdapter.onCategoryClick, Exercice
     /* when user clicks on a database exercice */
     override fun onFavListener(item: ExerciseItem) {
         val exerciceItem = ExerciseToAdd(item.name, item.picture, item.description, item.category, null)
-
         workoutsViewModel.insertExercice(exerciceItem)
+
         viewModel.searchQuery.value = ""
         viewModel.categoryQuery.value = ""
-        findNavController().navigate(R.id.action_addWorkoutFragment_to_mainFragment)
+
+        if(exerciceExchange){
+            workoutsViewModel.deleteExercice(exToDelete)
+            findNavController().navigate(R.id.action_addWorkoutFragment_to_workoutEditor)
+        }else{
+            findNavController().navigate(R.id.action_addWorkoutFragment_to_mainFragment)
+        }
+
     }
 
     override fun onHelpClick(item: ExerciseItem) {
@@ -140,6 +166,37 @@ class AddWorkoutFragment : Fragment(), CategoryAdapter.onCategoryClick, Exercice
         alertdialog.show()
     }
 
+    private fun loadNativeAds(categoryAdapter: ExercicesAdapter) {
+        /*val builder = AdLoader.Builder(requireContext(), resources.getString(R.string.native_ad_unit_id))
+
+        val adLoader = builder.forUnifiedNativeAd(UnifiedNativeAd.OnUnifiedNativeAdLoadedListener {
+
+            val adView = layoutInflater.inflate(R.layout.unified_ad_view, null) as UnifiedNativeAdView
+
+            adView.ad_headline.text = it.headline
+            adView.ad_app_icon.load(it.icon.uri)
+
+            adView.setNativeAd(it)
+            //adView.removeAllViews()
+
+        }).withAdListener(object : AdListener(){
+            override fun onAdFailedToLoad(p0: LoadAdError?) {
+                super.onAdFailedToLoad(p0)
+
+                Toast.makeText(requireContext(), "Failed ${p0?.message}", Toast.LENGTH_SHORT).show()
+            }
+        }).build()
+
+        adLoader.loadAd(AdRequest.Builder().build())*/
+
+        val adapter = AdmobNativeAdAdapter.Builder.with(resources.getString(R.string.native_ad_unit_id),
+            categoryAdapter,
+        "small").adItemInterval(10).build()
+
+
+        binding.veritcalRecycler.adapter = adapter
+    }
+
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateOptionsMenu(menu, inflater)
 
@@ -157,6 +214,20 @@ class AddWorkoutFragment : Fragment(), CategoryAdapter.onCategoryClick, Exercice
         if(pendingQuery.isNotEmpty()){
             searchItem.expandActionView()
             searchView.setQuery(pendingQuery, false)
+        }
+    }
+
+    fun readIntent(){
+        val argument = arguments?.getString("param")
+        if(argument.equals(Constants.EXERCICE_EXCHANGE)){
+            val exId = arguments?.getSerializable("exId") as Exercice
+
+            exerciceExchange = argument?.isNotEmpty() == true && argument.equals(Constants.EXERCICE_EXCHANGE)
+
+            exToDelete = exId
+
+            view?.let { Snackbar.make(it, "Alege un exercitiu in locul ${exToDelete.name}", Snackbar.LENGTH_LONG).show() }
+            Toast.makeText(requireContext(), "Alege un exercitiu in locul ${exToDelete.name}", Toast.LENGTH_LONG).show()
         }
     }
 }

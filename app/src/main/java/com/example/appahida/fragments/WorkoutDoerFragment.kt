@@ -2,35 +2,42 @@ package com.example.appahida.fragments
 
 import android.app.AlertDialog
 import android.content.Intent
-import android.graphics.Color
 import android.os.Bundle
 import android.view.*
 import android.widget.NumberPicker
 import android.widget.Toast
 import androidx.activity.addCallback
-import androidx.appcompat.widget.SearchView
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.PagerSnapHelper
+import coil.load
+import com.efaso.admob_advanced_native_recyvlerview.AdmobNativeAdAdapter
 import com.example.appahida.R
 import com.example.appahida.adapters.*
+import com.example.appahida.constants.Constants
 import com.example.appahida.constants.Constants.ACTION_PAUSE_SERVICE
 import com.example.appahida.constants.Constants.ACTION_START_OR_RESUME
 import com.example.appahida.constants.Constants.ACTION_STOP_SERVICE
 import com.example.appahida.constants.Constants.countValues
 import com.example.appahida.constants.Constants.weightValues
 import com.example.appahida.databinding.WorkoutDoerLayoutBinding
+import com.example.appahida.db.workoutsdb.Exercice
 import com.example.appahida.db.workoutsdb.ExercicesWithReps
 import com.example.appahida.services.WorkingService
 import com.example.appahida.utils.Utility
-import com.example.appahida.viewmodels.MainViewModel
-import com.example.appahida.viewmodels.WorkoutDoerViewModel
 import com.example.appahida.viewmodels.WorkoutViewModel
+import com.google.android.gms.ads.AdListener
+import com.google.android.gms.ads.AdLoader
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.formats.UnifiedNativeAd
+import com.google.android.gms.ads.formats.UnifiedNativeAdView
 import com.google.android.material.textfield.TextInputEditText
 import dagger.hilt.android.AndroidEntryPoint
-import timber.log.Timber
+import kotlinx.android.synthetic.main.unified_ad_view.view.*
 
 @AndroidEntryPoint
 class WorkoutDoerFragment : Fragment(), WorkoutEditorListAdapter.FavClickListener{
@@ -62,12 +69,16 @@ class WorkoutDoerFragment : Fragment(), WorkoutEditorListAdapter.FavClickListene
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val adapterHor = WorkoutEditorListAdapter(this)
+        val adapterHor = WorkoutEditorListAdapter(requireContext(), this)
 
         WorkingService.timeWorkedInMilliseconds.observe(viewLifecycleOwner){
             curTimeInMilis = it
             val formattedTime = Utility.getFormattedStopWatchTime(it)
             binding.seconds.text = formattedTime
+        }
+
+        WorkingService.timePause.observe(viewLifecycleOwner){
+            binding.pauseTimer.text = it.toString()
         }
 
         WorkingService.isWorking.observe(viewLifecycleOwner){
@@ -96,7 +107,9 @@ class WorkoutDoerFragment : Fragment(), WorkoutEditorListAdapter.FavClickListene
             horRecycler.apply {
                 layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
                 hasFixedSize()
-                adapter = adapterHor
+                //adapter = adapterHor
+
+                loadNativeAds(adapterHor)
             }
 
             startTimer.setOnClickListener {
@@ -215,6 +228,46 @@ class WorkoutDoerFragment : Fragment(), WorkoutEditorListAdapter.FavClickListene
 
         val alertdialog = builder.create()
         alertdialog.show()
+    }
+
+    override fun onExchangeExercice(exercice : Exercice) {
+        val parameter = Constants.EXERCICE_EXCHANGE
+
+        val bundle = bundleOf("param" to parameter)
+        bundle.putSerializable("exId", exercice)
+
+        findNavController().navigate(R.id.action_workoutEditor_to_addWorkoutFragment, bundle)
+    }
+
+    private fun loadNativeAds(categoryAdapter: WorkoutEditorListAdapter) {
+        /*val builder = AdLoader.Builder(requireContext(), resources.getString(R.string.native_ad_unit_id))
+
+        val adLoader = builder.forUnifiedNativeAd(UnifiedNativeAd.OnUnifiedNativeAdLoadedListener {
+
+            val adView = layoutInflater.inflate(R.layout.unified_ad_view, null) as UnifiedNativeAdView
+
+            adView.ad_headline.text = it.headline
+            adView.ad_app_icon.load(it.icon.uri)
+
+            adView.setNativeAd(it)
+            //adView.removeAllViews()
+
+        }).withAdListener(object : AdListener(){
+            override fun onAdFailedToLoad(p0: LoadAdError?) {
+                super.onAdFailedToLoad(p0)
+
+                Toast.makeText(requireContext(), "Failed ${p0?.message}", Toast.LENGTH_SHORT).show()
+            }
+        }).build()
+
+        adLoader.loadAd(AdRequest.Builder().build())*/
+
+        val adapter = AdmobNativeAdAdapter.Builder.with(resources.getString(R.string.native_ad_unit_id),
+            categoryAdapter,
+            "custom").adItemInterval(3).build()
+
+
+        binding.horRecycler.adapter = adapter
     }
 
 }
