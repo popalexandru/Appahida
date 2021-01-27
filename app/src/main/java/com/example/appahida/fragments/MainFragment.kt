@@ -24,6 +24,7 @@ import com.example.appahida.adapters.RepAdapter
 import com.example.appahida.constants.Constants.ACTION_START_OR_RESUME
 import com.example.appahida.databinding.FragmentMainBinding
 import com.example.appahida.db.workoutsdb.ExercicesWithReps
+import com.example.appahida.gestures.OnSwipeTouchListener
 import com.example.appahida.onVersionChanged
 import com.example.appahida.services.WorkingService
 import com.example.appahida.utils.Utility
@@ -54,6 +55,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 @AndroidEntryPoint
 class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClickListener {
@@ -65,9 +67,9 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
     lateinit var workoutAdapter : ExercicesListAdapter
     lateinit var repsAdapter : RepAdapter
 
-    lateinit var bottomSheetBehavior: BottomSheetBehavior<NestedScrollView>
-
+    lateinit var calendar : HorizontalCalendar
     private var isTodaysWorkoutDone = false
+    private var isToday = false
 
     private var _binding : FragmentMainBinding? = null
     private val binding get() = _binding!!
@@ -87,7 +89,6 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
     lateinit var alert : AlertDialog
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        logMessage("onCreate")
         super.onCreate(savedInstanceState)
 
         //loadNativeAds()
@@ -107,28 +108,21 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
         callback.isEnabled = true
     }
 
-    private var isWorking = false
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        Timber.d("onViewCreated")
 
-        setupBottomSheet()
+        setSwipeListener()
+
+        setBindingViewModel()
+
         setHorizontalCalendar()
 
+        //TODO commented exercices
         viewModel.getExercices(this)
 
-        WorkingService.isWorking.observe(viewLifecycleOwner){ workoutOngoing ->
+/*        WorkingService.isWorking.observe(viewLifecycleOwner){ workoutOngoing ->
             //binding.fab.isVisible = it
-            binding.startWorkout.isVisible = workoutOngoing
-
-            if(workoutOngoing){
-                bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
-            }else{
-                bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
-            }
-
-            isWorking = workoutOngoing
-        }
+            binding.startWorkout.isVisible = !workoutOngoing
+        }*/
 
 /*        binding.fab.setOnClickListener {
             if(WorkingService.isWorking.value == true){
@@ -144,29 +138,39 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
                     isTodaysWorkoutDone = true
                     //binding.startWorkout.visibility = View.GONE
                     binding.workoutFinishedCV.visibility = View.VISIBLE
-                    binding.finishGroup.visibility = View.GONE
+                    binding.workoutOngoing.visibility = View.GONE
+                    //binding.finishGroup.visibility = View.GONE
                     binding.durataAntrenament.text = Utility.getFormattedDuration(today.workoutDuration)
                 }else{
                     isTodaysWorkoutDone = false
+                    if(WorkingService.isWorking.value == true){
+                        binding.startWorkout.visibility = View.GONE
+                        binding.workoutOngoing.visibility = View.VISIBLE
+                    }else{
+                        binding.workoutOngoing.visibility = View.GONE
+                    }
                     binding.workoutFinishedCV.visibility = View.GONE
                     binding.startWorkout.text = "INCEPE ANTRENAMENT"
 
-                    binding.finishGroup.visibility = View.VISIBLE
+                    //binding.finishGroup.visibility = View.VISIBLE
                 }
             }
         }
 
         workoutsViewModel.exercicesForToday.observe(viewLifecycleOwner){ dayWithExercise ->
             if(dayWithExercise != null){
+                Timber.d("Exercices list: ${dayWithExercise.exercices.size}")
                 if(dayWithExercise.exercices.size > 0){
                     val exercicesList = dayWithExercise.exercices
                     workoutAdapter.submitList(exercicesList)
                     makeListVisible()
                 }else{
                     hideList()
+                    Timber.d("Exercices list is empty")
                 }
             }else{
                 hideList()
+                Timber.d("Exercices list is null")
             }
 
         }
@@ -176,12 +180,11 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
                 viewModel.setReminder()
                 Timber.d("Setare reminder")
             }else{
-                Timber.d("Reminder is already set")
+                //Timber.d("Reminder is already set")
             }
         }
 
         viewModel.waterQtyFlow.observe(viewLifecycleOwner){
-            Timber.d("Setting max water to $it")
             if(it > 0){
                 binding.progressWater.max = it
             }else{
@@ -189,24 +192,25 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
             }
         }
 
-        viewModel.waterLive.observe(viewLifecycleOwner){
-            if(it != null){
+        viewModel.waterLive.observe(viewLifecycleOwner){ waterValue ->
+            if(waterValue != null){
 
-            if(it > 1000){
-                binding.waterQty.setTextColor(Color.parseColor("#AAAA00"))
-            }
-            if(it > 2000){
-                binding.waterQty.setTextColor(Color.parseColor("#00AA00"))
-            }
+                if(waterValue > 1000){
+                    binding.waterQty.setTextColor(Color.parseColor("#AAAA00"))
+                }
+
+                if(waterValue > 2000){
+                    binding.waterQty.setTextColor(Color.parseColor("#00AA00"))
+                }
 
                 val currentValue = Integer.parseInt(binding.waterQty.text.toString())
-                val newValue = it
+                val newValue = waterValue
 
                 if((newValue - currentValue) > 900){
                     binding.waterQty.text = newValue.toString()
                     binding.progressWater.progress = newValue
                 }else{
-                    val valueAnimator = ValueAnimator.ofInt(currentValue, it)
+                    val valueAnimator = ValueAnimator.ofInt(currentValue, waterValue)
                     valueAnimator.setDuration(700)
                     valueAnimator.addUpdateListener(ValueAnimator.AnimatorUpdateListener{
                         binding.waterQty.text = it.getAnimatedValue().toString()
@@ -220,15 +224,33 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
                 binding.waterQty.text = "0"
                 binding.progressWater.progress = 0
             }
-        }
+        } /* water live observer */
 
         setupRecyclerView()
         setWaterButtons()
         forSettingWater()
 
         binding.apply{
-            adauga.setOnClickListener { findNavController().navigate(R.id.action_mainFragment_to_addWorkoutFragment)}
-            arrow.setOnClickListener { findNavController().navigate(R.id.action_mainFragment_to_addWorkoutFragment) }
+/*            adauga.setOnClickListener {
+                findNavController().navigate(R.id.action_mainFragment_to_addWorkoutFragment)
+            }
+            //TODO : change
+
+            arrow.setOnClickListener { findNavController().navigate(R.id.action_mainFragment_to_addWorkoutFragment) }*/
+
+            fab.setOnClickListener {
+                findNavController().navigate(R.id.action_mainFragment_to_addWorkoutFragment)
+            }
+
+            workoutOngoing.setOnClickListener {
+                if(isTodaysWorkoutDone){
+                    workoutOngoing.visibility = View.GONE
+                    Toast.makeText(requireContext(), "Error", Toast.LENGTH_SHORT).show()
+                }else{
+                    findNavController().navigate(R.id.action_mainFragment_to_workoutEditor)
+
+                }
+            }
 
             startWorkout.setOnClickListener {
                 val builder = AlertDialog.Builder(context)
@@ -236,19 +258,15 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
                         .setCancelable(true)
                         .setPositiveButton("Da"){ dialog, id ->
                             if(workoutsViewModel.todaysValue.value?.isWorkoutDone == true){
+                                Toast.makeText(requireContext(), "Error", Toast.LENGTH_SHORT).show()
                                 binding.startWorkout.isVisible = false
                             }else{
-                                Toast.makeText(requireContext(), "Antrenamentul incepe..", Toast.LENGTH_SHORT).show()
                                 findNavController().navigate(R.id.action_mainFragment_to_workoutEditor)
                                 sendCommandToService(ACTION_START_OR_RESUME)
                             }
                         }
-                        .setNegativeButton("Nu") { dialog, id ->
-                            // Dismiss the dialog
-                            dialog.dismiss()
-                        }
-                val alert = builder.create()
-                alert.show()
+                        .setNegativeButton("Nu") { dialog, id -> dialog.dismiss() }
+                builder.create().show()
             }
 
             deleteImg.setOnClickListener {
@@ -258,15 +276,9 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
                     .setPositiveButton("Da"){ dialog, id ->
                         workoutsViewModel.deleteToday()
                     }
-                    .setNegativeButton("Nu") { dialog, id ->
-                        // Dismiss the dialog
-                        dialog.dismiss()
-                    }
-                val alert = builder.create()
-                alert.show()
-
-
-            }
+                    .setNegativeButton("Nu") { dialog, id -> dialog.dismiss() }
+                builder.create().show()
+            } /* delete listener */
 
             detailsButton.setOnClickListener {
                 val builder = AlertDialog.Builder(context)
@@ -282,59 +294,39 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
                 builder.setView(customLayout)
                         .setCancelable(true)
 
-                val alertdialog = builder.create()
-                alertdialog.show()
-            }
+                builder.create().show()
+                //alertdialog.show()
+            } /* details listener */
         }
 
     }
 
-    private fun setupBottomSheet(){
-        val bottomSheet = binding.bottomSheet as NestedScrollView
-        bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet)
+    private fun setBindingViewModel() = binding.apply {
+/*        viewModel = viewModel
+        workoutViewModel = workoutsViewModel*/
+    }
 
-        /* show/hide button */
-        val showHideButton = binding.toggleButton
-        showHideButton?.setOnCheckedChangeListener { _, checked ->
-            if(checked){
-                bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
-            }else{
-                bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
-            }
-        }
+    private fun setSwipeListener() {
+        binding.mainLayout?.setOnTouchListener(object : OnSwipeTouchListener(requireContext()){
+            override fun onSwipeLeft() {
+                super.onSwipeLeft()
 
-        /* bottom sheet callback */
-        bottomSheetBehavior.addBottomSheetCallback(object :
-        BottomSheetBehavior.BottomSheetCallback(){
-            override fun onStateChanged(bottomSheet: View, newState: Int) {
-                when(newState){
-                    BottomSheetBehavior.STATE_COLLAPSED -> {
-                        showHideButton?.isChecked = false
-                    }
+                val currentDate = calendar.selectedDate
+                currentDate.timeInMillis += TimeUnit.DAYS.toMillis(1)
 
-                    BottomSheetBehavior.STATE_EXPANDED -> {
-                        showHideButton?.isChecked = true
-                    }
-
-                    else -> Unit
-                }
+                calendar.selectDate(currentDate, false)
             }
 
-            override fun onSlide(bottomSheet: View, slideOffset: Float) {
-                System.out.println("sliding $slideOffset")
-            }
+            override fun onSwipeRight() {
+                super.onSwipeRight()
 
+                val currentDate = calendar.selectedDate
+                currentDate.timeInMillis -= TimeUnit.DAYS.toMillis(1)
+
+                calendar.selectDate(currentDate, false)
+            }
         })
-
-        if(isWorking){
-            bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
-        }else{
-            bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
-        }
-
-        bottomSheet.isVisible = isWorking
     }
-
 
     private fun setHorizontalCalendar(){
         val startDate = Calendar.getInstance()
@@ -343,7 +335,7 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
         val endDate = Calendar.getInstance()
         endDate.add(Calendar.MONTH, 1)
 
-        val calendar = HorizontalCalendar.Builder(requireActivity(), R.id.calendarview)
+        calendar = HorizontalCalendar.Builder(requireActivity(), R.id.calendarview)
                 .range(startDate, endDate)
                 .datesNumberOnScreen(7)
                 .configure().showTopText(false)
@@ -351,8 +343,9 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
                 .build()
 
         val listener = object : HorizontalCalendarListener(){
-
             override fun onDateSelected(date: Calendar?, position: Int) {
+                val timestampSelected = date?.timeInMillis
+
                 val time = Calendar.getInstance().apply {
                     timeInMillis = date?.timeInMillis!!
                     set(Calendar.HOUR_OF_DAY, 0)
@@ -369,18 +362,15 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
                 }*/
 
                 if(DateUtils.isToday(time)){
+                    isToday = true
                     binding.apply {
+                        fab?.show()
+                        azi.text = "Azi"
                         mesaj.text = "Nu ai un antrenament inca"
+                        //adauga.visibility = View.VISIBLE
+                        //separator.visibility = View.GONE
 
                         if(!isTodaysWorkoutDone){
-                            if(!editBtn.isVisible){
-                                editBtn.isVisible = true
-                            }
-
-                            if(!arrow.isVisible){
-                                arrow.isVisible = true
-                            }
-
                             if(!mesaj.isVisible){
                                 mesaj.isVisible = true
                             }
@@ -388,44 +378,52 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
                         }
                     }
                 }else{
-                    binding.apply {
-                        if(!mesaj.text.equals("Nu te-ai antrenat in aceasta zi")){
-                            mesaj.text = "Nu te-ai antrenat in aceasta zi"
-                        }
+                        isToday = false
+                        val today = Calendar.getInstance().get(Calendar.DAY_OF_MONTH)
+                        val selDay = date?.get(Calendar.DAY_OF_MONTH)!!
 
-                        if(editBtn.isVisible){
-                            editBtn.visibility = View.GONE
-                        }
+                        val todayMonth = Calendar.getInstance().get(Calendar.MONTH)
+                        val selectedMonth = Calendar.getInstance().get(Calendar.MONTH)
+                        val isValid = (todayMonth == selectedMonth)
 
-                        if(arrow.isVisible){
-                            arrow.visibility = View.GONE
-                        }
+                        if(today < selDay){
+                            /* future */
 
-                        if(adauga.isVisible){
-                            adauga.visibility = View.GONE
+                            binding.apply {
+                                //arrow.visibility = View.GONE
+                                //adauga.visibility = View.GONE
+                                //separator.visibility = View.VISIBLE
+                                fab.show()
+                                //waterBtnLayout?.visibility = View.VISIBLE
+                            }
+
+                            if(today == selDay - 1){
+                                /* tomorrow*/
+                                binding.azi.text = "Maine"
+                            }else{
+                                /* + 2 days */
+                                binding.azi.text = Utility.getDateString(timestampSelected!!)
+                                binding.mesaj.text = "Planifica un antrenament"
+                            }
+                        }else{
+                            /* past */
+                            if(today == selDay + 1){
+                                /* yesterday */
+                                binding.apply {
+                                    azi.text = "Ieri"
+                                }
+                            }
+                            binding.apply {
+                                mesaj.text = "Nu te-ai antrenat in aceasta zi"
+                                fab.hide()
+                               // /arrow.visibility = View.GONE
+                                //adauga.visibility = View.GONE
+                                //separator.visibility = View.GONE
+                                //waterBtnLayout?.visibility = View.GONE
+                            }
+
                         }
-                    }
                 }
-
-/*                if(DateUtils.isToday(time)){
-                    *//* its fine *//*
-                        binding.apply {
-                            adauga.isVisible = true
-                            arrow.isVisible = true
-                            //editBtn.isVisible = true
-                            mesaj.text = "Nu ai un antrenament inca"
-                            finishGroup.visibility = View.GONE
-                            binding.startWorkout.visibility = View.VISIBLE
-                        }
-                }else{
-                    binding.apply {
-                        adauga.isVisible = false
-                        arrow.isVisible = false
-                        editBtn.isVisible = false
-                        mesaj.text = "Nu te-ai antrenat in aceasta zi"
-                    }
-                }*/
-
             }
         }
 
@@ -443,11 +441,6 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
             val thisAlert = builder.create()
             thisAlert.setContentView(R.layout.water_settings)
             thisAlert.show()
-
-/*            builder.create().apply {
-                setContentView(R.layout.water_settings)
-                show()
-            }*/
 
             val picker : NumberPicker = thisAlert.findViewById(R.id.picker)
             val pickerMl : NumberPicker = thisAlert.findViewById(R.id.picker_2)
@@ -473,15 +466,18 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
     }
     private fun setWaterButtons(){
         binding.size300.setOnClickListener {
-            viewModel.addWater(300)
+            if(isToday)
+                viewModel.addWater(300)
         }
 
         binding.size900.setOnClickListener {
-            viewModel.addWater(900)
+            if(isToday)
+                viewModel.addWater(900)
         }
 
         binding.size500.setOnClickListener {
-            viewModel.addWater(500)
+            if(isToday)
+                viewModel.addWater(500)
         }
     }
     private fun setupRecyclerView(){
@@ -491,7 +487,8 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
         binding.apply{
             workoutRecyclerView.apply {
                 layoutManager = LinearLayoutManager(context)
-                hasFixedSize()
+                //hasFixedSize()
+                setItemViewCacheSize(3)
                 adapter = workoutAdapter
                 addItemDecoration(DividerItemDecoration(this.context, DividerItemDecoration.VERTICAL))
             }
@@ -551,38 +548,35 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
     private var isListVisible = false
 
     private fun makeListVisible(){
-        if(!isListVisible){
             binding.workoutRecyclerView.visibility = View.VISIBLE
             //binding.gantera.visibility = View.GONE
             binding.mesaj.visibility = View.GONE
             //binding.editBtn.visibility = View.VISIBLE
-            binding.adauga.text = "Adauga exercitiu"
+            //binding.adauga.text = "Adauga exercitiu"
             binding.deleteImg.visibility = View.VISIBLE
 
-            if(workoutsViewModel.todaysValue.value?.isWorkoutDone == false){
+            if(workoutsViewModel.todaysValue.value?.isWorkoutDone == false && WorkingService.isWorking.value == false){
                 binding.startWorkout.visibility = View.VISIBLE
+                binding.workoutOngoing?.visibility = View.GONE
             }else{
                 binding.startWorkout.visibility = View.GONE
+                binding.workoutOngoing?.visibility = View.VISIBLE
             }
 
-            isListVisible = true
             Timber.d("List made visible")
-        }
     }
 
     private fun hideList(){
         //TODO : card view flicker
-        if(isListVisible){
             binding.deleteImg.visibility = View.GONE
             binding.workoutRecyclerView.visibility = View.GONE
             //binding.gantera.visibility = View.VISIBLE
             binding.mesaj.visibility = View.VISIBLE
-            binding.adauga.text = "Adauga un antrenament"
+            //binding.adauga.text = "Adauga un antrenament"
             binding.startWorkout.visibility = View.GONE
 
             isListVisible = false
             Timber.d("List made invisible")
-        }
 
     }
 
@@ -784,5 +778,10 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
         }).build()
 
         adLoader.loadAd(AdRequest.Builder().build())
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

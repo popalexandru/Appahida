@@ -1,9 +1,7 @@
 package com.example.appahida.preferences
 
 import android.content.Context
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.emptyPreferences
-import androidx.datastore.preferences.core.preferencesKey
+import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.createDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -78,9 +76,9 @@ class PreferencesManager @Inject constructor(@ApplicationContext context : Conte
 
     /* object stored inside */
     private object PreferencesKeys {
-        val EXERCICES_VERSION = preferencesKey<Int>("exercice_version")
-        val WATER_QUANTITY = preferencesKey<Int>("water_qty")
-        val REMINDER_SET = preferencesKey<Boolean>("reminder_set")
-        val SORT_ORDER = preferencesKey<String>("sort_order")
+        val EXERCICES_VERSION = intPreferencesKey("exercice_version")
+        val WATER_QUANTITY = intPreferencesKey("water_qty")
+        val REMINDER_SET = booleanPreferencesKey("reminder_set")
+        val SORT_ORDER = stringPreferencesKey("sort_order")
     }
 }

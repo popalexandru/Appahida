@@ -1,6 +1,7 @@
 package com.example.appahida.repository
 
 import android.content.Context
+import android.widget.Toast
 import com.example.appahida.constants.Constants.EXERCICES_FIREBASE_NAME
 import com.example.appahida.constants.Constants.EXERCICES_VERSION_COLLECTION
 import com.example.appahida.constants.Constants.EXERCICES_VERSION_DOCUMENT
@@ -36,6 +37,7 @@ class FirebaseRepository @Inject constructor(
     fun getExercicesByCategory(category: String, search: String) : Flow<List<ExerciseItem>> = exercisesDAO.getExercicesByCategory(category, search)
 
     fun getExercicesList(listener : onVersionChanged) = CoroutineScope(Dispatchers.IO).launch{
+        Timber.d("running firebase query")
         database.collection(EXERCICES_FIREBASE_NAME)
                 .get()
                 .addOnSuccessListener {
@@ -53,6 +55,12 @@ class FirebaseRepository @Inject constructor(
                     }
 
                     listener.stopLoading()
+                }
+                .addOnFailureListener {
+                    Timber.d("Firebase error: ${it.message}")
+                }
+                .addOnCanceledListener {
+                    Timber.d("Firebase canceled")
                 }
     }
 

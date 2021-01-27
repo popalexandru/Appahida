@@ -3,10 +3,12 @@
     package="com.example.appahida">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="com.android.alarm.permission.SET_ALARM"/>
-    <application
+    <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
 
+    <application
         android:name=".BaseApplication"
         android:allowBackup="true"
         android:icon="@mipmap/logo_albastru"
@@ -15,10 +17,19 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Appahida"
         android:usesCleartextTraffic="true">
+        <activity android:name=".SplashActivity"
+            android:theme="@style/Theme.NoBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+        </activity>
 
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-4479200586800321~6708611487"/>
+            android:value="ca-app-pub-4479200586800321~6708611487" />
 
         <service
             android:name=".services.WorkingService"
@@ -27,12 +38,8 @@
         <receiver
             android:name=".alarms.AlarmBroadcastReceiver"
             android:process=":remote" />
-        <activity android:name=".MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+        <activity android:name=".MainActivity">
         </activity>
     </application>
 

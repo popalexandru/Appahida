@@ -95,6 +95,9 @@ class WorkoutViewModel @ViewModelInject constructor(
 
         if (todayRecord != null) {
             workoutRepository.deleteTodayRecord(todayRecord)
+            Timber.d("Deleting ${todayRecord.day.dateString}")
+        }else{
+            Toast.makeText(context, "An error occured", Toast.LENGTH_SHORT).show()
         }
     }
 }

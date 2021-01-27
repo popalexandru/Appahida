@@ -17,33 +17,26 @@
         tools:layout="@layout/fragment_main" >
         <action
             android:id="@+id/action_mainFragment_to_addWorkoutFragment"
+            app:destination="@id/addWorkoutFragment"
             app:enterAnim="@anim/slide_in_right"
-            app:exitAnim="@anim/fade_out"
-            app:destination="@id/addWorkoutFragment"/>
+            app:exitAnim="@anim/fade__out_scale_down"
+            app:popEnterAnim="@anim/fade_in_scale_up"
+            app:popExitAnim="@anim/slide_out_right"/>
         <action
             android:id="@+id/action_mainFragment_to_workoutEditor"
             app:destination="@id/workoutEditor"
             app:enterAnim="@anim/slide_in_bottom"
-            app:exitAnim="@anim/fade_out" />
+            app:exitAnim="@anim/fade__out_scale_down"
+            app:popEnterAnim="@anim/fade_in_scale_up"
+            app:popExitAnim="@anim/slide_out_bottom"/>
     </fragment>
 
     <fragment
         android:id="@+id/addWorkoutFragment"
         android:name="com.example.appahida.fragments.AddWorkoutFragment"
-        android:label="AddWorkoutFragment" >
-        <action
-            android:id="@+id/action_addWorkoutFragment_to_mainFragment"
-            app:destination="@id/mainFragment"
-            app:enterAnim="@anim/fade__in"
-            app:exitAnim="@anim/slide_out_right"/>
+        android:label="AddWorkoutFragment"
+        tools:layout="@layout/fragment_addworkout">
 
-        <argument
-            android:name="exchange"
-            app:argType="string"
-            android:defaultValue=""/>
-        <action
-            android:id="@+id/action_addWorkoutFragment_to_workoutEditor"
-            app:destination="@id/workoutEditor" />
     </fragment>
 
     <fragment
@@ -62,5 +55,9 @@
 
         </action>
     </fragment>
+    <fragment
+        android:id="@+id/workoutMotion"
+        android:name="com.example.appahida.fragments.WorkoutMotion"
+        android:label="WorkoutMotion" />
 
 </navigation>

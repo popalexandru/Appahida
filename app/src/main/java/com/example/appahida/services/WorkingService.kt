@@ -8,6 +8,9 @@ import android.app.PendingIntent.FLAG_UPDATE_CURRENT
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
@@ -19,6 +22,7 @@ import com.example.appahida.constants.Constants
 import com.example.appahida.constants.Constants.ACTION_PAUSE_SERVICE
 import com.example.appahida.constants.Constants.ACTION_SHOW_TRACKING_FRAGMENT
 import com.example.appahida.constants.Constants.ACTION_START_OR_RESUME
+import com.example.appahida.constants.Constants.ACTION_START_PAUSE
 import com.example.appahida.constants.Constants.ACTION_STOP_SERVICE
 import com.example.appahida.constants.Constants.NOTIFICAITON_CHANNEL_ID
 import com.example.appahida.constants.Constants.NOTIFICATION_CHANNEL_AME
@@ -44,6 +48,8 @@ class WorkingService : LifecycleService() {
     lateinit var baseNotificationBuilder : NotificationCompat.Builder
 
     private var isPauseEnabled = true
+    private var isPause = false
+
     private var pauseTimer = 30L
 
     lateinit var currentNotification : NotificationCompat.Builder
@@ -53,6 +59,7 @@ class WorkingService : LifecycleService() {
     private var timeRun = 0L
     private var timeStarted = 0L
     private var lastSecondTimestamp = 0L
+
 
     companion object {
         val isWorking = MutableLiveData<Boolean>(false)
@@ -70,15 +77,20 @@ class WorkingService : LifecycleService() {
         })
     }
 
+    fun pauseStart(){
+        isPause = true
+        timePause.postValue(pauseTimer)
+    }
+
     fun startTimer(){
         isWorking.postValue(true)
         timeStarted = System.currentTimeMillis()
         isTimerEnabled = true
 
-        if(isFirstPause){
+/*        if(isFirstPause){
             timePause.postValue(pauseTimer)
             isFirstPause = false
-        }
+        }*/
 
         CoroutineScope(Dispatchers.Main).launch {
             while(isWorking.value!!){
@@ -89,9 +101,11 @@ class WorkingService : LifecycleService() {
                     timeWorkedInSeconds.postValue(timeWorkedInSeconds.value!! + 1)
                     lastSecondTimestamp += 1000L
 
-                    if(isPauseEnabled){
+                    if(isPauseEnabled && isPause){
                         if(pauseTimer > 0 && timePause.value!! > 0){
                             timePause.postValue(timePause.value!! - 1)
+                        }else if (timePause.value!! == 0L){
+                            isPause = false
                         }
                     }
                 }
@@ -142,6 +156,10 @@ class WorkingService : LifecycleService() {
                 ACTION_STOP_SERVICE -> {
                     Timber.d("Stopped service")
                     killService()
+                }
+
+                ACTION_START_PAUSE -> {
+                    pauseStart()
                 }
             }
         }

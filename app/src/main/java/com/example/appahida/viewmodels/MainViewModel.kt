@@ -123,7 +123,7 @@ class MainViewModel @ViewModelInject constructor(
 
     fun setWaterReminder(){
         //val time = System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1)
-        val time = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(30)
+        val time = System.currentTimeMillis() + TimeUnit.HOURS.toMillis(4)
 
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 

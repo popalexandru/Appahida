@@ -32,6 +32,7 @@ object Constants {
     const val ACTION_START_OR_RESUME = "ACTION_START_OR_RESUME"
     const val ACTION_PAUSE_SERVICE = "ACTION_PAUSE_SERVICE"
     const val ACTION_STOP_SERVICE = "ACTION_STOP_SERVICE"
+    const val ACTION_START_PAUSE = "ACTION_START_PAUSE"
 
     const val NOTIFICAITON_CHANNEL_ID = "working_channel"
     const val NOTIFICATION_CHANNEL_AME = "Working"

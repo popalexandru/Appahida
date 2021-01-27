@@ -32,6 +32,7 @@ interface WorkoutsExercicesDAO {
     @Query("SELECT * FROM Day WHERE dayId = :timestamp")
     fun getDayWithExercices(timestamp : Long) : Flow<DayWithExercices>
 
+    @Transaction
     @Query("SELECT * FROM Exercice WHERE dayId = :dayId")
     fun getExercicesForDay(dayId : Long) : Flow<List<ExercicesWithReps>>
 

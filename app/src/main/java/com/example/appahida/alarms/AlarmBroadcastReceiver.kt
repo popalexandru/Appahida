@@ -50,7 +50,7 @@ class AlarmBroadcastReceiver : BroadcastReceiver() {
         val mBuilder = NotificationCompat.Builder(context!!, "AlarmId")
             .setSmallIcon(R.drawable.logo)
             .setContentTitle("Water reminder")
-            .setContentText("Nu uita sa bei apa !")
+            .setContentText("Nu uita sa bei apa :) !")
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_MAX)
@@ -66,7 +66,7 @@ class AlarmBroadcastReceiver : BroadcastReceiver() {
 }
 
     private fun setNextAlarm(context: Context){
-        val nextTime = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(30)
+        val nextTime = System.currentTimeMillis() + TimeUnit.HOURS.toMillis(4)
 
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 

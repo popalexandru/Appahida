@@ -36,6 +36,7 @@ import com.google.android.gms.ads.formats.UnifiedNativeAdView
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.unified_ad_view.view.*
+import timber.log.Timber
 
 @AndroidEntryPoint
 class AddWorkoutFragment : Fragment(), CategoryAdapter.onCategoryClick, ExercicesAdapter.FavClickListener {
@@ -54,11 +55,11 @@ class AddWorkoutFragment : Fragment(), CategoryAdapter.onCategoryClick, Exercice
 
         setHasOptionsMenu(true)
 
-        val callback = requireActivity().onBackPressedDispatcher.addCallback(this){
+/*        val callback = requireActivity().onBackPressedDispatcher.addCallback(this){
             findNavController().navigate(R.id.action_addWorkoutFragment_to_mainFragment)
         }
 
-        callback.isEnabled = true
+        callback.isEnabled = true*/
 
         readIntent()
     }
@@ -87,9 +88,10 @@ class AddWorkoutFragment : Fragment(), CategoryAdapter.onCategoryClick, Exercice
             veritcalRecycler.apply{
                 layoutManager = LinearLayoutManager(context)
                 hasFixedSize()
-                //adapter = adaptere
+                setItemViewCacheSize(3)
+                adapter = adaptere
 
-                loadNativeAds(adaptere)
+                //loadNativeAds(adaptere)
 
                 addItemDecoration(DividerItemDecoration(this.context, DividerItemDecoration.VERTICAL))
             }
@@ -134,14 +136,17 @@ class AddWorkoutFragment : Fragment(), CategoryAdapter.onCategoryClick, Exercice
         val exerciceItem = ExerciseToAdd(item.name, item.picture, item.description, item.category, null)
         workoutsViewModel.insertExercice(exerciceItem)
 
+        Timber.d("Inserting exercice ${exerciceItem.name}")
+
         viewModel.searchQuery.value = ""
         viewModel.categoryQuery.value = ""
 
         if(exerciceExchange){
             workoutsViewModel.deleteExercice(exToDelete)
-            findNavController().navigate(R.id.action_addWorkoutFragment_to_workoutEditor)
+            //findNavController().navigate(R.id.action_addWorkoutFragment_to_workoutEditor)
         }else{
-            findNavController().navigate(R.id.action_addWorkoutFragment_to_mainFragment)
+            //findNavController().navigate(R.id.action_addWorkoutFragment_to_mainFragment)
+            findNavController().navigateUp()
         }
 
     }
@@ -229,5 +234,10 @@ class AddWorkoutFragment : Fragment(), CategoryAdapter.onCategoryClick, Exercice
             view?.let { Snackbar.make(it, "Alege un exercitiu in locul ${exToDelete.name}", Snackbar.LENGTH_LONG).show() }
             Toast.makeText(requireContext(), "Alege un exercitiu in locul ${exToDelete.name}", Toast.LENGTH_LONG).show()
         }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }
