@@ -386,6 +386,8 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
                         val selectedMonth = Calendar.getInstance().get(Calendar.MONTH)
                         val isValid = (todayMonth == selectedMonth)
 
+                        binding.workoutOngoing.isVisible = false
+
                         if(today < selDay){
                             /* future */
 
