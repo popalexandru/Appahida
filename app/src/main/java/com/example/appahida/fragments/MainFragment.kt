@@ -110,6 +110,9 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
+        binding.mainViewModel = viewModel
+        binding.workoutViewModel
+
         setSwipeListener()
 
         setBindingViewModel()
@@ -144,13 +147,13 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
                 }else{
                     isTodaysWorkoutDone = false
                     if(WorkingService.isWorking.value == true){
-                        binding.startWorkout.visibility = View.GONE
+                        //binding.startWorkout.visibility = View.GONE
                         binding.workoutOngoing.visibility = View.VISIBLE
                     }else{
                         binding.workoutOngoing.visibility = View.GONE
                     }
                     binding.workoutFinishedCV.visibility = View.GONE
-                    binding.startWorkout.text = "INCEPE ANTRENAMENT"
+                    //binding.startWorkout.text = "INCEPE ANTRENAMENT"
 
                     //binding.finishGroup.visibility = View.VISIBLE
                 }
@@ -259,7 +262,7 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
                         .setPositiveButton("Da"){ dialog, id ->
                             if(workoutsViewModel.todaysValue.value?.isWorkoutDone == true){
                                 Toast.makeText(requireContext(), "Error", Toast.LENGTH_SHORT).show()
-                                binding.startWorkout.isVisible = false
+                                //binding.startWorkout.isVisible = false
                             }else{
                                 findNavController().navigate(R.id.action_mainFragment_to_workoutEditor)
                                 sendCommandToService(ACTION_START_OR_RESUME)
@@ -558,10 +561,10 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
             binding.deleteImg.visibility = View.VISIBLE
 
             if(workoutsViewModel.todaysValue.value?.isWorkoutDone == false && WorkingService.isWorking.value == false){
-                binding.startWorkout.visibility = View.VISIBLE
+                //binding.startWorkout.visibility = View.VISIBLE
                 binding.workoutOngoing?.visibility = View.GONE
             }else{
-                binding.startWorkout.visibility = View.GONE
+                //binding.startWorkout.visibility = View.GONE
                 binding.workoutOngoing?.visibility = View.VISIBLE
             }
 
@@ -575,7 +578,7 @@ class MainFragment : Fragment(), onVersionChanged, ExercicesListAdapter.FavClick
             //binding.gantera.visibility = View.VISIBLE
             binding.mesaj.visibility = View.VISIBLE
             //binding.adauga.text = "Adauga un antrenament"
-            binding.startWorkout.visibility = View.GONE
+            //binding.startWorkout.visibility = View.GONE
 
             isListVisible = false
             Timber.d("List made invisible")

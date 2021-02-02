@@ -88,7 +88,6 @@ class AddWorkoutFragment : Fragment(), CategoryAdapter.onCategoryClick, Exercice
             veritcalRecycler.apply{
                 layoutManager = LinearLayoutManager(context)
                 hasFixedSize()
-                setItemViewCacheSize(3)
                 adapter = adaptere
 
                 //loadNativeAds(adaptere)

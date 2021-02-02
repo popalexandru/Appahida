@@ -17,7 +17,9 @@
 package com.example.appahida.adapters
 
 import android.view.View
+import android.widget.ProgressBar
 import androidx.databinding.BindingAdapter
+import timber.log.Timber
 
 @BindingAdapter("isGone")
 fun isWorkoutOngoing(view: View, isGone: Boolean) {
@@ -25,5 +27,15 @@ fun isWorkoutOngoing(view: View, isGone: Boolean) {
         View.GONE
     } else {
         View.VISIBLE
+    }
+}
+
+@BindingAdapter("setWaterMax")
+fun setWater(progressBar: ProgressBar, value : Int){
+    if(value > 0){
+        Timber.d("Setting water max to $value")
+        progressBar.max = value
+    }else{
+        progressBar.max = 2000
     }
 }
