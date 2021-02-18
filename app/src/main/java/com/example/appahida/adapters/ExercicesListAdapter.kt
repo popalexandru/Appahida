@@ -13,7 +13,7 @@ import com.example.appahida.db.workoutsdb.ExercicesWithReps
 import kotlinx.android.synthetic.main.exercice_added_item.view.*
 import timber.log.Timber
 
-class ExercicesListAdapter(private val listener : FavClickListener, private val context : Context) : ListAdapter<ExercicesWithReps, ExercicesListAdapter.CakeViewHolder>(
+class ExercicesListAdapter() : ListAdapter<ExercicesWithReps, ExercicesListAdapter.CakeViewHolder>(
     DiffCallback()
 ){
 
@@ -24,7 +24,7 @@ class ExercicesListAdapter(private val listener : FavClickListener, private val 
         val adapter = RepAdapter()
         binding.repsRecyclerView.adapter = adapter
 
-        return CakeViewHolder(binding, listener)
+        return CakeViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: CakeViewHolder, position: Int) {
@@ -43,7 +43,7 @@ class ExercicesListAdapter(private val listener : FavClickListener, private val 
         holder.bind(currentCake)
     }
 
-    inner class CakeViewHolder(private val binding : ExerciceAddedItemBinding, private val listener : FavClickListener) : RecyclerView.ViewHolder(binding.root){
+    inner class CakeViewHolder(private val binding : ExerciceAddedItemBinding) : RecyclerView.ViewHolder(binding.root){
 
         init {
 
@@ -52,7 +52,7 @@ class ExercicesListAdapter(private val listener : FavClickListener, private val 
                         val position = adapterPosition
                         if(position != RecyclerView.NO_POSITION){
                             val cake = getItem(position)
-                            listener.onFavListener(cake)
+                            //listener.onFavListener(cake)
                         }
                     }
 
@@ -63,7 +63,7 @@ class ExercicesListAdapter(private val listener : FavClickListener, private val 
                         //binding.adaugaRep.visibility = View.GONE
                         //binding.repsRecyclerView.visibility = View.VISIBLE
 
-                        getItem(adapterPosition).exercice.exId?.let { it1 -> listener.onAddClick(varticalAdapter, it1) }
+                        //getItem(adapterPosition).exercice.exId?.let { it1 -> listener.onAddClick(varticalAdapter, it1) }
                     }
                 }
         }

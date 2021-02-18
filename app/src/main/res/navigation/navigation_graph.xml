@@ -59,5 +59,13 @@
         android:id="@+id/workoutMotion"
         android:name="com.example.appahida.fragments.WorkoutMotion"
         android:label="WorkoutMotion" />
+    <fragment
+        android:id="@+id/dayFragment"
+        android:name="com.example.appahida.fragments.DayFragment"
+        android:label="DayFragment" >
+        <action
+            android:id="@+id/action_dayFragment_to_addWorkoutFragment"
+            app:destination="@id/addWorkoutFragment" />
+    </fragment>
 
 </navigation>

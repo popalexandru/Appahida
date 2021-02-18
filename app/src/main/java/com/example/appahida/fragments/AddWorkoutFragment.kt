@@ -24,6 +24,7 @@ import com.example.appahida.db.exercicesDB.ExerciseItem
 import com.example.appahida.db.workoutsdb.Exercice
 import com.example.appahida.objects.ExerciseToAdd
 import com.example.appahida.objects.WorkoutCategory
+import com.example.appahida.utils.Utility
 import com.example.appahida.utils.onQueryTextChanged
 import com.example.appahida.viewmodels.MainViewModel
 import com.example.appahida.viewmodels.WorkoutViewModel
@@ -46,6 +47,8 @@ class AddWorkoutFragment : Fragment(), CategoryAdapter.onCategoryClick, Exercice
     private lateinit var searchView: SearchView
     private  var exerciceExchange = false
     private lateinit var exToDelete : Exercice
+
+    private var todaysTimestamp = 0L
 
     private val viewModel: MainViewModel by activityViewModels()
     private val workoutsViewModel : WorkoutViewModel by activityViewModels()
@@ -133,9 +136,9 @@ class AddWorkoutFragment : Fragment(), CategoryAdapter.onCategoryClick, Exercice
     /* when user clicks on a database exercice */
     override fun onFavListener(item: ExerciseItem) {
         val exerciceItem = ExerciseToAdd(item.name, item.picture, item.description, item.category, null)
-        workoutsViewModel.insertExercice(exerciceItem)
+        workoutsViewModel.insertExercice(exerciceItem, todaysTimestamp)
 
-        Timber.d("Inserting exercice ${exerciceItem.name}")
+        Timber.d("Inserting exercice ${exerciceItem.name} for ${Utility.getDateString(todaysTimestamp)}")
 
         viewModel.searchQuery.value = ""
         viewModel.categoryQuery.value = ""
@@ -223,7 +226,12 @@ class AddWorkoutFragment : Fragment(), CategoryAdapter.onCategoryClick, Exercice
 
     fun readIntent(){
         val argument = arguments?.getString("param")
-        if(argument.equals(Constants.EXERCICE_EXCHANGE)){
+
+        if(argument.equals(Constants.ADD_WORKOUT_FOR_TODAY)){
+
+            todaysTimestamp = arguments?.getLong("timestamp")!!
+
+        }else if(argument.equals(Constants.EXERCICE_EXCHANGE)){
             val exId = arguments?.getSerializable("exId") as Exercice
 
             exerciceExchange = argument?.isNotEmpty() == true && argument.equals(Constants.EXERCICE_EXCHANGE)

@@ -111,16 +111,13 @@ class WorkoutRepository @Inject constructor(
     }
 
     fun insertDay(timestamp: Long)= CoroutineScope(Dispatchers.IO).launch {
-/*        var reStamp = timestamp
-        reStamp -= timestamp % (24*60*60*1000)
-        reStamp += 1*/
         val reStamp = Calendar.getInstance()
         reStamp.timeInMillis = timestamp
         reStamp.set(Calendar.HOUR_OF_DAY, 0)
         reStamp.set(Calendar.MINUTE, 0)
         reStamp.set(Calendar.SECOND, 1)
         reStamp.set(Calendar.MILLISECOND, 0)
-        //workoutExercicesDAO.insertDay(Day(null,Utility.getDateString(timestamp), timestamp, false, 0))
+
         workoutExercicesDAO.insertDay(Day(reStamp.timeInMillis, Utility.getDateString(reStamp.timeInMillis), false, 0))
     }
 }

@@ -51,6 +51,12 @@ object Utility {
         return DateFormat.format("dd-MM-yyyy", calendar).toString()
     }
 
+    fun getDateMonth(timestamp: Long): String {
+        val calendar = Calendar.getInstance()
+        calendar.timeInMillis = timestamp
+        return DateFormat.format("dd MMM", calendar).toString()
+    }
+
     fun getFormattedDuration(time : Long) : String {
         var milliseconds = time
 

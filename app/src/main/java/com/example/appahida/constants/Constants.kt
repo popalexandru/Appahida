@@ -26,6 +26,7 @@ object Constants {
     const val EXERCICE_CAT = "Category"
 
     const val EXERCICE_EXCHANGE = "EXERCICE_EXCHANGE"
+    const val ADD_WORKOUT_FOR_TODAY = "ADD_WORKOUT_FOR_TODAY"
 
     const val TIMER_UPDATE_INTERVAL = 50L
 
